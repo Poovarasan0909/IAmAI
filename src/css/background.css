@@ -1,0 +1,17 @@
+.video-background {
+    position: relative;
+    width: 100%;
+    height: 100vh; /* Adjust this height as needed */
+    overflow: hidden;
+}
+
+.video-background video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -1;
+}

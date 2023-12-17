@@ -1,0 +1,33 @@
+.response_container {
+    width: 750px;
+    height: 440px;
+    border: 2px solid #0a008078;
+    border-radius: 45px;
+    background-color:rgba(87, 100, 208, 0.4);
+    color: white;
+    font-size: larger;
+    margin-top: 10%;
+    padding: 30px;
+    overflow-x: auto;
+    overflow-y: auto;
+    font-weight: 900;
+}
+#prompt_inputs {
+    width: 700px;
+    height: 60px;
+    border: 2px solid #0a008078;
+    background-color:rgba(87, 100, 208, 0.4);
+    border-radius: 45px;
+    font-size: larger;
+    color: white;
+    padding-left: 30px;
+    font-family: "Lucida Console","Courier New",monospace;
+}
+
+.sent_button {
+    background: none;
+    border: none ;
+    cursor: pointer;
+    padding: 15px;
+    margin-top: 10px;
+}

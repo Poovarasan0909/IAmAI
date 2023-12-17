@@ -1,6 +1,11 @@
 .App {
   text-align: center;
 }
+.app{
+  background-color: rgb(151, 147, 147);
+  z-index: -999;
+}
+
 
 .App-logo {
   height: 40vmin;
@@ -36,3 +41,4 @@
     transform: rotate(360deg);
   }
 }
+
