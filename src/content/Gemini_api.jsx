@@ -1,5 +1,4 @@
 import React from "react";
-import {GoogleGenerativeAI} from "@google/generative-ai";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPaperPlane} from '@fortawesome/free-solid-svg-icons'
 import jsonData from '../../package.json'
@@ -22,7 +21,6 @@ class gemini_api extends React.Component {
             const model = genAI.getGenerativeModel({model: "gemini-pro"});
             const result = await model.generateContent(prompt);
             const response = await result.response;
-            const text = response.text();
             return response.text();
         }
 

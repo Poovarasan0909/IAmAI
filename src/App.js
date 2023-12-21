@@ -6,9 +6,10 @@ import './css/contentPage.css'
 
 function App() {
   return (
-      <div>
+      <div className={"container"}>
           <Background/>
           <div style={{position: 'absolute', top: 0, right: 0, width: '100%', height: '100%'}}>
+              {/* eslint-disable-next-line react/jsx-pascal-case */}
               <Gemini_api/>
           </div>
       </div>
