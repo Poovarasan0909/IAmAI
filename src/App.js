@@ -10,7 +10,7 @@ function App() {
       <div className={"container"}>
           <Helmet>
               <meta charSet="utf-8" />
-              <title>Your React App</title>
+              <title>IAmAI</title>
               <meta name="viewport" content="width=device-width, initial-scale=1.0" />
               {/* Other meta tags */}
           </Helmet>
