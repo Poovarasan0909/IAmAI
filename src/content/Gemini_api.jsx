@@ -26,6 +26,16 @@ class gemini_api extends React.Component {
 
         run().then(r => this.setState({response: r}));
     }
+    handleKeyDown = (event) => {
+        if(event.key === 'Enter')  {
+            let prompt = document.getElementById("prompt_inputs").value
+            if(prompt.length > 0) {
+            document.getElementById("prompt_inputs").value = ''
+            this.getResponseFromAI(prompt)
+            this.setState({question : prompt})
+            }
+        }
+    }
 
     render() {
         return (
@@ -36,21 +46,28 @@ class gemini_api extends React.Component {
                 justifyContent: 'center',
                 height: '100vh'
             }}>
+                <div className="title-container">
+                    <h1 className="title">IAmAI</h1>
+                </div>
                 <div id="res" className="response_container">
-                    <div>{this.state.question}</div>
+                    <div className={"question_header"}>{this.state.question}</div>
+                    {this.state.question.length > 0 && <div className={"horizontal-line"}></div>}
                     <div>{this.state.response}</div>
-
                 </div>
                 <br/>
                 <div>
-                    <input type="text" id={"prompt_inputs"}/>
-                    <button className="sent_button" onClick={() => {
-                        let prompt = document.getElementById("prompt_inputs").value
-                        document.getElementById("prompt_inputs").value = ''
-                        this.getResponseFromAI(prompt)
-                        // eslint-disable-next-line react/no-direct-mutation-state
-                        this.state.question = prompt
-                    }}><FontAwesomeIcon icon={faPaperPlane} color={'green'} fontSize={40}/>
+                    <input type="text" id={"prompt_inputs"} onKeyUp={this.handleKeyDown}/>
+                    <button className="sent_button"
+                            onClick={() => {
+                                let prompt = document.getElementById("prompt_inputs").value
+                                if (prompt.length > 0) {
+                                    this.getResponseFromAI(prompt)
+                                    document.getElementById("prompt_inputs").value = ''
+                                    this.setState({question: prompt})
+                                }
+                            }}
+                            onKeyUp={this.handleKeyDown}
+                    ><FontAwesomeIcon icon={faPaperPlane} color={'green'} fontSize={40}/>
                     </button>
                 </div>
             </div>
