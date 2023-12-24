@@ -38,7 +38,7 @@ class gemini_api extends React.Component {
             if(prompt.length > 0) {
             document.getElementById("prompt_inputs").value = ''
             this.getResponseFromAI(prompt)
-            this.setState({question : prompt})
+            this.setState({question : prompt, response: []})
             }
         }
     }
@@ -86,7 +86,7 @@ class gemini_api extends React.Component {
                                 if (prompt.length > 0) {
                                     this.getResponseFromAI(prompt)
                                     document.getElementById("prompt_inputs").value = ''
-                                    this.setState({question: prompt})
+                                    this.setState({question: prompt, response: []})
                                 }
                             }}
                             onKeyUp={this.handleKeyDown}
