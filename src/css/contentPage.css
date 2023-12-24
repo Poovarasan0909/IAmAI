@@ -37,7 +37,7 @@
     color: #FFFF00;
 }
 .horizontal-line {
-    border-bottom: 1px dashed red;
+    border-bottom: 2px dashed #0edee5;
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -68,4 +68,15 @@
     background: linear-gradient(to right, #2ecc71, #3498db, #ffff00); /* Adjust gradient colors */
     border-radius: 10px; /* Rounded border */
     opacity: 0.8; /* Adjust opacity */
+}
+.input-portion input::placeholder {
+    color: #a8a8a8;
+}
+.response-title {
+    color: #48ff1e;
+}
+.center {
+    align-content: center;
+    justify-content: center;
+    display: flex;
 }
