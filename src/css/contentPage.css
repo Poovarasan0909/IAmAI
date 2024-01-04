@@ -80,3 +80,15 @@
     justify-content: center;
     display: flex;
 }
+pre {
+    display: block;
+    font-family: monospace;
+    white-space: pre;
+    margin: 1em 0;
+    /*border: 2px solid black;*/
+}
+.code_block {
+    border: 2px solid rgba(7, 5, 5, 0.47);
+    overflow-x: auto;
+    overflow-y: auto;
+}
