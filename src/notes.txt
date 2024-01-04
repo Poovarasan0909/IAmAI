@@ -1,0 +1,61 @@
+1. **Set up a React Project**
+
+
+- Create a new React project using `create-react-app my-react-app`.
+- Install the necessary dependencies: `npm install axios`.
+
+
+2. **Set up a Spring Boot Project**
+
+
+- Create a new Spring Boot project using `spring initializr`.
+- Add the `Spring Web` and `Spring Data JPA` dependencies.
+
+- Create a `Product` entity class and a `ProductRepository` interface.
+- Add a REST controller to handle API requests.
+
+
+3. **Configure CORS in Spring Boot**
+
+
+- Add the following line to the `application.properties` file: `spring.mvc.cors.allowed-origins=*`.
+- This will allow CORS requests from any origin.
+
+
+4. **Connect React and Spring Boot**
+
+
+- In your React component, use `axios` to make API requests to the Spring Boot API.
+- For example:
+
+
+javascript
+import axios from 'axios';
+const App = () => {
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    axios.get('http://localhost:8080/api/products')
+      .then(res => setProducts(res.data))
+      .catch(err => console.log(err));
+  }, []);
+  return (
+    <div>
+      <h1>Products</h1>
+      <ul>
+        {products.map(product => (
+          <li key={product.id}>{product.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+export default App;
+
+5. **Run the Applications**
+
+
+- Run the Spring Boot application using `mvn spring-boot:run`.
+- Run the React application using `npm start`.
+
+
+- You should now be able to access the React application at `http://localhost:3000` and see a list of products fetched from the Spring Boot API.
