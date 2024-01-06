@@ -4,14 +4,14 @@
     height: 440px;
     border: 2px solid #0a008078;
     border-radius: 45px;
-    background-color:rgba(87, 100, 208, 0.9);
+    background-color: rgba(10, 10, 10, 0.9);
     color: white;
     font-size: larger;
     margin-top: 1%;
     padding: 30px;
     overflow-x: auto;
     overflow-y: auto;
-    font-weight: 900;
+    font-weight: 400;
 }
 #prompt_inputs {
     width: 700px;
@@ -34,7 +34,7 @@
     margin-top: 10px;
 }
 .question_header {
-    color: #FFFF00;
+    color: #e13535;
 }
 .horizontal-line {
     border-bottom: 2px dashed #0edee5;
@@ -87,8 +87,9 @@ pre {
     margin: 1em 0;
     /*border: 2px solid black;*/
 }
-.code_block {
-    border: 2px solid rgba(7, 5, 5, 0.47);
+.code-container{
+    border: 2px solid rgb(104, 200, 204);
+    border-radius: 8px;
     overflow-x: auto;
     overflow-y: auto;
 }
