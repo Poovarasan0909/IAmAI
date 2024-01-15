@@ -15,15 +15,15 @@
 }
 #prompt_inputs {
     width: 700px;
-    height: 60px;
+    height: 33px;
     border: 2px solid #0a008078;
     background-color:rgba(87, 100, 208, 0.9);
-    border-radius: 45px;
+    border-radius: 10px;
     font-size: larger;
     color: #FFFF00;
-    padding-left: 30px;
+    padding-left: 10px;
     font-family: "Lucida Console","Courier New",monospace;
-    font-weight: 900;
+    font-weight: 500;
 }
 
 .sent_button {
@@ -46,12 +46,15 @@
     justify-content: center;
     align-items: center;
     height: 16vh; /* Full viewport height */
+    position: fixed;
+    top: 0;
+    left: 20px;
 }
 
 /* Styling the title */
 .title {
     font-family: 'Arial', sans-serif; /* Change font family */
-    font-size: 6em; /* Adjust font size */
+    font-size: 3em; /* Adjust font size */
     color: #00ff38; /* Adjust font color */
     position: relative;
 }
@@ -88,8 +91,35 @@ pre {
     /*border: 2px solid black;*/
 }
 .code-container{
-    border: 2px solid rgb(104, 200, 204);
+    border: 2px solid rgb(143, 155, 155);
     border-radius: 8px;
     overflow-x: auto;
     overflow-y: auto;
+    background-color: #484646;
+    padding-left: 15px;
+    margin-block-end: 20px;
+}
+.code-container::-webkit-scrollbar {
+    width: 16px;
+    height: 9px;
+}
+.code-container::-webkit-scrollbar-track {
+    border-radius: 10px;
+}
+.code-container::-webkit-scrollbar-thumb {
+    background-color: #b0a8a8;
+    border-radius: 10px;
+    border: 1px solid #837e7e;
+    cursor: pointer;
+}
+.code-header {
+    background-color: #343030;
+    margin-left: -15px;
+    padding-left: 10px;
+    padding-bottom: 5px;
+    padding-top: 5px;
+    position: sticky;
+    font-size: 15px;
+    top: 0;
+    left: -15px;
 }
