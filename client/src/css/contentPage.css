@@ -1,0 +1,187 @@
+/* Parent container for Flexbox layout */
+.parent-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 100vh;
+    padding: 20px;
+}
+
+.title-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 10vh;
+}
+
+.title {
+    font-family: 'Arial', sans-serif;
+    font-size: 3em;
+    color: #41f426;
+    position: relative;
+}
+
+.title::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -5%;
+    right: -5%;
+    bottom: 0;
+    z-index: -1;
+    background: linear-gradient(to right, #2ecc71, #3498db, #d96cf4);
+    border-radius: 10px;
+    opacity: 0.8;
+}
+
+.response_container {
+    width: 90%;
+    max-width: 751px;
+    max-height: 80%;
+    height: 440px;
+    border: none;
+    border-radius: 0;
+    background-color: rgba(200, 200, 204, 0.47);
+    color: white;
+    font-size: larger;
+    padding: 30px;
+    overflow: auto;
+    font-weight: 900;
+    margin: 20px 0;
+}
+
+.input-portion {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 10px;
+}
+
+#prompt_inputs {
+    width: 96%;
+    max-width: 800px;
+    height: 1.5rem;
+    border-color: #e1e1e1;
+    background-color: rgba(200, 200, 204, 0.47);
+    border-radius: 19px;
+    font-size: medium;
+    color: #090909;
+    padding-left: 30px;
+    padding-top: 10px;
+    font-family: "Lucida Console", "Courier New", monospace;
+    font-weight: 900;
+    /*margin-right: 10px;*/
+    resize: none;
+}
+#prompt_inputs:focus {
+    border-color: #979393;
+    outline: none;
+}
+
+.sent_button {
+    /*background: none;*/
+    /*border: none;*/
+    /*cursor: pointer;*/
+    /*padding: 0;*/
+    /*margin-top: 0;*/
+
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 5px 10px;
+    border-radius: 19px;
+    font-size: medium;
+    font-family: "Lucida Console", "Courier New", monospace;
+    font-weight: 900;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.question_header {
+    color: #FFFF00;
+}
+
+.horizontal-line {
+    border-bottom: 2px dashed #595252;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.input-portion input::placeholder {
+    color: #a8a8a8;
+}
+
+.response-title {
+    color: #48ff1e;
+}
+
+.center {
+    align-content: center;
+    justify-content: center;
+    display: flex;
+}
+
+pre {
+    display: block;
+    font-family: monospace;
+    white-space: pre;
+    margin: 1em 0;
+}
+
+.code_block {
+    border: 2px solid rgba(7, 5, 5, 0.47);
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+    .response_container {
+        width: 95%;
+        height: auto;
+        max-height: 60%;
+        padding: 20px;
+    }
+
+    #prompt_inputs {
+        width: 95%;
+        height: 50px;
+        font-size: medium;
+    }
+
+    .title {
+        font-size: 4em;
+    }
+}
+
+/* Media query for tablets and small laptops */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .response_container {
+        width: 80%;
+        height: auto;
+        max-height: 70%;
+        padding: 25px;
+    }
+
+    #prompt_inputs {
+        width: 80%;
+        height: 55px;
+        font-size: large;
+    }
+
+    .title {
+        font-size: 5em;
+    }
+}
+
+.textarea-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 816px;
+}
