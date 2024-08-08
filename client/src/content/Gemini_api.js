@@ -1,45 +1,59 @@
 import React, {useRef, useState} from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import jsonData from '../../package.json';
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faPaperPlane} from '@fortawesome/free-solid-svg-icons';
 import LoaderActive from '../loader/LoaderActive';
+import testResponse from '../responseTest';
+import robot from '../css/webp/robot_avatar.webp';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-javascript.min.js'; // Import the language you need
+import 'prismjs/components/prism-markup.min.js';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/themes/prism-dark.css';
+import SideBarContent from "./SideBarContent";
+
 
 const GeminiApi = () => {
-    const [response, setResponse] = useState([]);
+
+    const [response, setResponse] = useState(false);
     const [question, setQuestion] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
     const [textareaHeight, setTextareaHeight] = useState('2rem');
     const textareaRef = useRef(null);
     const [previousLineCount, setPreviousLineCount] = useState(1);
+    const [codeLanguageName, setCodeLanguageName] = useState('');
 
     const getResponseFromAI = async (prompt) => {
         setLoading(true);
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(jsonData.authKey);
-
+        const {GoogleGenerativeAI} = require("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
+        setResponse(true);
+        let testRes = null;
         const run = async () => {
             const model = genAI.getGenerativeModel({ model: "gemini-pro" });
             const result = await model.generateContent(prompt);
             const response = await result.response;
-            console.log("response ->>", response);
+            // await fetch(testResponse)
+            //     .then(response => response.text())
+            //     .then(data => {
+            //         testRes = data
+            //     })
             return response.text();
         };
 
         run().then(res => {
             const formattedResponse = reformatResponse(res);
-            console.log("formatted response -->", formattedResponse);
-            document.getElementById("response_element").innerHTML = '';
+            if (document.getElementById("response_element"))
+                document.getElementById("response_element").innerHTML = '';
             formattedResponse.forEach(element =>
-                document.getElementById("response_element").appendChild(element)
+                document.getElementById("response_element")?.appendChild(element)
             );
-            setResponse(formattedResponse);
             setLoading(false);
         });
     };
 
     const reformatResponse = (text) => {
-        const lines = text.split('\n');
-        console.log(lines, "linessss");
+        const lines = text?.split('\n');
         const formattedResponse = [];
         const spaceStarCheck = /^\s*\*/gm;
         const spaceHypenCheck = /^\s*-/gm;
@@ -48,15 +62,17 @@ const GeminiApi = () => {
         let isCodeLine = '';
         let codeContainer = document.createElement('div');
         codeContainer.className = "code_block";
-
         lines.forEach((line, index) => {
             const codeElement = document.createElement('code');
             const preElement = document.createElement('pre');
+            const language = codeLanguageName;
+            preElement.key = `code-block-${index}`
             line = line.replace(/^s+/, '');
             if (line.startsWith("```") || line.endsWith("```")) {
                 const completeCodeLine = /```([\s\S]*?)```/g;
                 if (completeCodeLine.test(line)) {
-                    codeElement.textContent = line.replace(/```/g, "");
+                    codeElement.className = `language-${language}`
+                    codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
                     preElement.appendChild(codeElement);
                     codeContainer.appendChild(preElement);
                     formattedResponse.push(codeContainer);
@@ -65,13 +81,17 @@ const GeminiApi = () => {
                     isCodeLine = 'oneLine';
                 } else {
                     if (isCodeLine === '') {
-                        codeElement.textContent = line.replace(/```/g, "");
+                        codeElement.className = `language-${language}`
+                        codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
+                        setCodeLanguageName(line.replace(/```/g, ""));
                         preElement.appendChild(codeElement);
+                        preElement.className = 'name-of-language'
                         codeContainer.appendChild(preElement);
                         isCodeLine = 'start';
                         isCodeFirstLine = true;
                     } else if (isCodeLine === 'start') {
-                        codeElement.textContent = line.replace(/```/g, "");
+                        codeElement.className = `language-${language}`;
+                        codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
                         preElement.appendChild(codeElement);
                         codeContainer.appendChild(preElement);
                         formattedResponse.push(codeContainer);
@@ -83,14 +103,15 @@ const GeminiApi = () => {
             } else isCodeFirstLine = false;
 
             if (isCodeLine === 'start' && !isCodeFirstLine) {
-                codeElement.textContent = line;
+                codeElement.className = `language-${language}`
+                codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
                 preElement.appendChild(codeElement);
                 codeContainer.appendChild(preElement);
             }
             if ([''].includes(isCodeLine)) {
                 if (line.startsWith("**")) {
                     const customElement = document.createElement('div');
-                    customElement.innerHTML = `<strong style="color: red;">${line.replace(/\*\*/g, '')}</strong>`;
+                    customElement.innerHTML = `<strong style="color: #000000;">${line.replace(/\*\*/g, '')}</strong>`;
                     formattedResponse.push(customElement);
                 } else if (line.startsWith("- **") || line.startsWith("* **")) {
                     const starLine = line.replace(/^[*-]/g, '').split('**');
@@ -106,10 +127,12 @@ const GeminiApi = () => {
                     customElement.innerHTML = `<li key=${index}>${line.replace(/^[-*]/, '')}</li>`;
                     formattedResponse.push(customElement);
                 } else if (line.length === 0) {
-                    formattedResponse.push(document.createElement('br'));
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.style.height = '10px';
+                    formattedResponse.push(emptyDiv);
                 } else {
                     const customElement = document.createElement('div');
-                    customElement.innerHTML = `<p key=${index}>${line}</p>`;
+                    customElement.innerHTML = `<p key=${index}>&emsp;&emsp;${line}</p>`;
                     formattedResponse.push(customElement);
                 }
             }
@@ -152,35 +175,38 @@ const GeminiApi = () => {
     }
 
     const handleKeyDown = (event) => {
-        console.log(event)
+        const textAreaValue = textareaRef.current.value;
+
+        if (event.key === 'Enter' && textAreaValue.trim() === '') {
+            event.preventDefault();
+        }
         if (event.key === 'Enter' && !event.shiftKey) {
             const prompt = textareaRef.current.value;
-            if (prompt.length > 0) {
+            if (prompt.trim().length > 0) {
                 textareaRef.current.value = '';
-                document.getElementById("response_element").innerHTML = '';
-                // getResponseFromAI(prompt);
+                if (document.getElementById("response_element"))
+                    document.getElementById("response_element").innerHTML = '';
+                getResponseFromAI(prompt);
                 setQuestion(prompt);
-                setResponse([]);
+                // setResponse(null);
             }
         }
         const currentLineCount = textareaRef.current.value.split('\n').length;
-        console.log(currentLineCount, "dfvdfvdffdfvf")
         const input = textareaRef.current.value
-        if(input.length === 0) {
+        if (input.length === 0) {
             adjustTextareaHeight(null);
-        } else if(event.key === 'Enter' && event.shiftKey){
+        } else if (event.key === 'Enter' && event.shiftKey) {
             adjustTextareaHeight(textareaRef.current.scrollHeight);
         } else if (event.key === 'Backspace') {
             if (currentLineCount < previousLineCount) {
-                adjustTextareaHeight((textareaRef.current.scrollHeight-22));
+                adjustTextareaHeight((textareaRef.current.scrollHeight - 22));
             }
             setPreviousLineCount(currentLineCount);
         }
 
-        document.getElementById('prompt_inputs').addEventListener('keyup', function() {
+        document.getElementById('prompt_inputs').addEventListener('keyup', function () {
             const lines = calculateLines(this);
-            adjustTextareaHeight((lines*22));
-            console.log('Number of lines:', lines);
+            adjustTextareaHeight((lines * 22));
         });
     };
 
@@ -188,53 +214,65 @@ const GeminiApi = () => {
     const adjustTextareaHeight = (scrollHeight) => {
         setTextareaHeight('1.5rem');
         const prompt_inputs = document.getElementById("prompt_inputs");
-        if(scrollHeight) {
+        if (scrollHeight) {
             setTextareaHeight(`${scrollHeight}px`);
             prompt_inputs.style.borderRadius = '15px'
-            console.log(scrollHeight, "scrollheight .....", prompt_inputs)
         } else {
             prompt_inputs.style.borderRadius = '40px'
         }
     };
 
+     const updateIsCollapsed = (value) => {
+         setIsCollapsed(value);
+     }
+
     return (
-        <div className="parent-container">
-            <div className="title-container">
-                <h1 className="title">IAmAI</h1>
+        <div className="main-container">
+            <div className="title-container" style={isCollapsed ?{width: 0}:{width: '10%'}}>
+                <SideBarContent isCollapsed={isCollapsed} updateIsCollapsed={updateIsCollapsed}></SideBarContent>
             </div>
-            <div id="res" className="response_container">
-                <div className="question_header">{question}</div>
-                {question.length > 0 && <div className="horizontal-line"></div>}
-                <div>
-                    {loading && <LoaderActive />}
-                    <div id="response_element"></div>
-                </div>
-            </div>
-            <div className="input-portion">
-                <div className="textarea-wrapper">
-                <textarea
-                    ref={textareaRef}
-                    style={{height: textareaHeight,maxHeight: '190px'}}
-                    id="prompt_inputs"
-                    onKeyUp={handleKeyDown}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask what you want to know!"
-                />
-            <button
-                className="sent_button"
-                onClick={() => {
-                    const prompt = document.getElementById("prompt_inputs").value;
-                    if (prompt.length > 0) {
-                        // getResponseFromAI(prompt);
-                        document.getElementById("prompt_inputs").value = '';
-                            setQuestion(prompt);
-                            setResponse([]);
-                        }
-                    }}
-                    onKeyUp={handleKeyDown}
-                >
-                    <FontAwesomeIcon icon={faPaperPlane} color="green" fontSize={20} />
-                </button>
+            <div className="parent-container" style={isCollapsed ?{width: '100%'}:{width: '90%'}}>
+                {response ?
+                    <div id="res" className="response_container">
+                        <div className="question_header">{question}</div>
+                        {question.length > 0 && <div className="horizontal-line"></div>}
+                        <div>
+                            {loading && <LoaderActive/>}
+                            <div id="response_element"></div>
+                        </div>
+                    </div>
+                    :
+                    <div>
+                        <img src={robot} style={{height: '22rem'}}
+                             alt={"loading...."}/>
+                    </div>}
+                <div className="input-portion">
+                    <div className="textarea-wrapper">
+                    <textarea
+                        ref={textareaRef}
+                        style={{height: textareaHeight, maxHeight: '190px'}}
+                        id="prompt_inputs"
+                        onKeyUp={handleKeyDown}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Ask what you want to know!"
+                    />
+                        <button
+                            className="sent_button"
+                            onClick={() => {
+                                const prompt = document.getElementById("prompt_inputs").value;
+                                if (prompt.length > 0) {
+                                    getResponseFromAI(prompt);
+                                    document.getElementById("prompt_inputs").value = '';
+                                    setQuestion(prompt);
+                                    setResponse(null);
+                                }
+                            }}
+                            // onKeyUp={handleKeyDown}
+                        >
+                            <FontAwesomeIcon icon={faPaperPlane} color="green" fontSize={20}/>
+                        </button>
+                    </div>
+                    <small></small>
                 </div>
             </div>
         </div>

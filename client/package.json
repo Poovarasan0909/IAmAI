@@ -1,5 +1,5 @@
 {
-  "homepage": "http://Poovarasan0909.github.io/IAmAI",
+  "homepage": "https://Poovarasan0909.github.io/IAmAI",
   "name": "iamai",
   "version": "0.1.0",
   "private": true,
@@ -8,22 +8,30 @@
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@google/generative-ai": "^0.1.1",
+    "@mui/icons-material": "^5.16.6",
+    "@mui/material": "^5.16.6",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "gh-pages": "^6.1.0",
+    "prismjs": "^1.29.0",
     "react": "^18.2.0",
+    "react-bootstrap": "^2.10.4",
+    "react-device-detect": "^2.2.3",
     "react-dom": "^18.2.0",
     "react-helmet": "^6.1.0",
     "react-loading": "^2.0.3",
+    "react-pro-sidebar": "^1.1.0",
     "react-scripts": "5.0.1",
+    "react-syntax-highlighter": "^15.5.0",
     "semantic-ui-react": "^2.1.5",
+    "styled-components": "^6.1.12",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
-    "start": "react-scripts start",
+    "start": "PORT=4000 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -45,6 +53,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "authKey": "AIzaSyD3hYO3Ese95XivATRhmJxLQBaQl-e5JTs"
+  }
 }
