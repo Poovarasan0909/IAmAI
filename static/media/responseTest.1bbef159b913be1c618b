@@ -1,0 +1,50 @@
+**Explanation:**
+
+React components have a built-in lifecycle method called `componentDidMount` which runs after the component has been mounted to the DOM. In this method, we can attach an event listener to the `window` object to detect when it becomes active or inactive.
+
+**Code:**
+
+```javascript
+import React, { useEffect } from "react";
+
+const App = () => {
+  // Create a function to handle the window activity changes
+  const handleActivityChange = (e) => {
+    // Check if the window is active or inactive
+    if (e.type === "focus") {
+      // The window is now active
+      console.log("Window is active");
+    } else {
+      // The window is now inactive
+      console.log("Window is inactive");
+    }
+  };
+
+  // Attach the event listener to the window
+  useEffect(() => {
+    window.addEventListener("focus", handleActivityChange);
+    window.addEventListener("blur", handleActivityChange);
+
+    // Clean up the event listeners when the component is unmounted
+    return () => {
+      window.removeEventListener("focus", handleActivityChange);
+      window.removeEventListener("blur", handleActivityChange);
+    };
+  }, []);
+
+  return (
+    <div>
+      {/* The rest of your application */}
+    </div>
+  );
+};
+
+export default App;
+```
+
+**Explanation of the code:**
+
+* The `useEffect` hook is used to attach and remove event listeners to the `window` object. It takes an array of dependencies as its second argument. In this case, the array is empty, which means that the effect will only run once, when the component is mounted.
+* The `handleActivityChange` function is called whenever the `focus` or `blur` events are fired on the `window` object. It checks the type of event and logs a message to the console indicating whether the window is active or inactive.
+* The `componentDidMount` lifecycle method is used to call the `useEffect` hook and attach the event listeners.
+* The cleanup function is used to remove the event listeners when the component is unmounted, to prevent memory leaks.
