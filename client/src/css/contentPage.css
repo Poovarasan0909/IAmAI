@@ -10,6 +10,7 @@ p {
     display: flex;
     flex-direction: row;
     height: 100vh;
+    overflow: hidden;
 }
 
 /* Parent container for Flexbox layout */
@@ -18,7 +19,7 @@ p {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: 100%;
     width: 90%;
     padding: 0;
 }
@@ -81,20 +82,22 @@ p {
 }
 
 #prompt_inputs {
-    width: 96%;
+    width: 100%;
     max-width: 800px;
-    height: 1.5rem;
+    height: 2.5rem;
     border-color: #e1e1e1;
     background-color: rgba(200, 200, 204, 0.47);
     border-radius: 19px;
     font-size: medium;
     color: #090909;
-    padding-left: 30px;
+    padding-left: 20px;
+    padding-right: 40px;
     padding-top: 10px;
     font-family: "Lucida Console", "Courier New", monospace;
     font-weight: 900;
     /*margin-right: 10px;*/
     resize: none;
+    box-sizing: border-box;
 }
 #prompt_inputs:focus {
     border-color: #979393;
@@ -104,8 +107,7 @@ p {
 .sent_button {
     position: absolute;
     right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 10px;
     padding: 5px 10px;
     border-radius: 19px;
     font-size: medium;
@@ -116,6 +118,7 @@ p {
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: transparent;
 }
 
 .question_header {
@@ -156,52 +159,90 @@ pre {
     overflow-x: auto;
     overflow-y: auto;
 }
+.css-dip3t8 {
+    background-color: white !important;
+}
 
 /* Media query for mobile devices */
 @media (max-width: 768px) {
-    .response_container {
+    .input-portion {
         width: 95%;
-        height: auto;
-        max-height: 60%;
-        padding: 20px;
     }
 
     #prompt_inputs {
-        width: 95%;
-        height: 50px;
+        height: 6rem;
         font-size: medium;
+        padding-right: 50px;
     }
 
+    .sent_button {
+        right: 15px;
+        bottom: 10px;
+    }
     .title {
-        font-size: 4em;
+        font-size: 0.5em;
+    }
+    .title-mobile {
+        font-size: 2rem;
     }
 }
 
 /* Media query for tablets and small laptops */
 @media (min-width: 769px) and (max-width: 1024px) {
+
+    .input-portion {
+        width: 80%;
+    }
+    #prompt_inputs {
+        height: 6.5rem;
+        font-size: large;
+        padding-right: 50px;
+    }
+
+    .sent_button {
+        right: 15px;
+        bottom: 12px;
+    }
     .response_container {
         width: 80%;
         height: auto;
         max-height: 70%;
         padding: 25px;
     }
-
-    #prompt_inputs {
-        width: 80%;
-        height: 55px;
-        font-size: large;
+    .robot-image{
+        height: 50rem !important;
     }
     .title {
-        font-size: 2em;
+        font-size: 0.7em;
     }
 }
 
 .textarea-wrapper {
     position: relative;
     width: 100%;
-    max-width: 816px;
 }
 
 .name-of-language {
     background-color: grey;
+}
+
+@media screen and (max-device-width:640px), screen and (max-width:640px){
+    #prompt_inputs {
+        height:2.3em !important;
+        font-size: 20px;
+        padding-right: 50px;
+    }
+    #prompt_inputs::placeholder {
+        font-size: 17px;
+    }
+    .sent_button{
+        width: 2rem;
+        height: 2rem;
+    }
+    .response_container {
+        top : 50px;
+    }
+    .container {
+        padding: 20px;
+    }
 }

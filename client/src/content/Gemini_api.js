@@ -10,6 +10,9 @@ import 'prismjs/components/prism-markup.min.js';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-dark.css';
 import SideBarContent from "./SideBarContent";
+import useIsMobile from "../hooks/useIsMobile";
+import {IconButton} from "@mui/material";
+import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 
 
 const GeminiApi = () => {
@@ -22,8 +25,12 @@ const GeminiApi = () => {
     const textareaRef = useRef(null);
     const [previousLineCount, setPreviousLineCount] = useState(1);
     const [codeLanguageName, setCodeLanguageName] = useState('');
+    const isMobile = useIsMobile();
 
     const getResponseFromAI = async (prompt) => {
+        let inst = 'Instruction: If anybody asked your name, tell them "My name is Poovarasan, and I developed this site. ' +
+            'if anybody ask who is varshini, you can describe one content she is very cute and beautiful girl, Prompt: "'
+        inst += prompt;
         setLoading(true);
         const {GoogleGenerativeAI} = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
@@ -31,7 +38,7 @@ const GeminiApi = () => {
         let testRes = null;
         const run = async () => {
             const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-            const result = await model.generateContent(prompt);
+            const result = await model.generateContent(inst);
             const response = await result.response;
             // await fetch(testResponse)
             //     .then(response => response.text())
@@ -188,7 +195,6 @@ const GeminiApi = () => {
                     document.getElementById("response_element").innerHTML = '';
                 getResponseFromAI(prompt);
                 setQuestion(prompt);
-                // setResponse(null);
             }
         }
         const currentLineCount = textareaRef.current.value.split('\n').length;
@@ -227,27 +233,35 @@ const GeminiApi = () => {
      }
 
     return (
-        <div className="main-container">
-            <div className="title-container" style={isCollapsed ?{width: 0}:{width: '10%'}}>
-                <SideBarContent isCollapsed={isCollapsed} updateIsCollapsed={updateIsCollapsed}></SideBarContent>
-            </div>
-            <div className="parent-container" style={isCollapsed ?{width: '100%'}:{width: '90%'}}>
-                {response ?
-                    <div id="res" className="response_container">
-                        <div className="question_header">{question}</div>
-                        {question.length > 0 && <div className="horizontal-line"></div>}
-                        <div>
-                            {loading && <LoaderActive/>}
-                            <div id="response_element"></div>
+        <>
+            {isMobile && isCollapsed &&
+            <div style={{display: 'flex', alignItems: "center", width: '100%'}}>
+                <IconButton onClick={() => updateIsCollapsed(!isCollapsed)}>
+                    <MenuOutlinedIcon/>
+                </IconButton>&nbsp;&nbsp;
+                <h2 className="title-mobile title" style={{fontSize: '2rem !important'}}>IAmAI</h2>
+            </div>}
+            <div className="main-container">
+                <div className="title-container" style={isCollapsed ? {width: 0} : {width: '10%'}}>
+                    <SideBarContent isCollapsed={isCollapsed} updateIsCollapsed={updateIsCollapsed}></SideBarContent>
+                </div>
+                <div className="parent-container" style={isCollapsed ? {width: '100%'} : {width: '90%'}}>
+                    {response ?
+                        <div id="res" className="response_container">
+                            <div className="question_header">{question}</div>
+                            {question.length > 0 && <div className="horizontal-line"></div>}
+                            <div>
+                                {loading && <LoaderActive/>}
+                                <div id="response_element"></div>
+                            </div>
                         </div>
-                    </div>
-                    :
-                    <div>
-                        <img src={robot} style={{height: '22rem'}}
-                             alt={"loading...."}/>
-                    </div>}
-                <div className="input-portion">
-                    <div className="textarea-wrapper">
+                        :
+                        <div style={{position:'relative', bottom:'100px'}}>
+                            <img className="robot-image" src={robot} style={{height: '22rem'}}
+                                 alt={"loading...."}/>
+                        </div>}
+                    <div className="input-portion">
+                        <div className="textarea-wrapper">
                     <textarea
                         ref={textareaRef}
                         style={{height: textareaHeight, maxHeight: '190px'}}
@@ -256,26 +270,54 @@ const GeminiApi = () => {
                         onKeyDown={handleKeyDown}
                         placeholder="Ask what you want to know!"
                     />
-                        <button
-                            className="sent_button"
-                            onClick={() => {
-                                const prompt = document.getElementById("prompt_inputs").value;
-                                if (prompt.length > 0) {
-                                    getResponseFromAI(prompt);
-                                    document.getElementById("prompt_inputs").value = '';
-                                    setQuestion(prompt);
-                                    setResponse(null);
-                                }
-                            }}
-                            // onKeyUp={handleKeyDown}
-                        >
-                            <FontAwesomeIcon icon={faPaperPlane} color="green" fontSize={20}/>
-                        </button>
+                            <button
+                                className="sent_button"
+                                onClick={() => {
+                                    const prompt = document.getElementById("prompt_inputs").value;
+                                    if (prompt.length > 0) {
+                                        getResponseFromAI(prompt);
+                                        document.getElementById("prompt_inputs").value = '';
+                                        setQuestion(prompt);
+                                    }
+                                }}
+                                // onKeyUp={handleKeyDown}
+                            >
+                                <FontAwesomeIcon icon={faPaperPlane} color="green" fontSize={isMobile ? 33 : 20}/>
+                            </button>
+                        </div>
                     </div>
-                    <small></small>
+
+                    {/*<div className="fixed bottom-3 left-0 w-8/12 bg-gray-100 flex justify-center items-center">*/}
+                    {/*    <div className="relative w-full">*/}
+                    {/*    <textarea*/}
+                    {/*        ref={textareaRef}*/}
+                    {/*        style={{height: textareaHeight, maxHeight: '190px'}}*/}
+                    {/*        id="prompt_inputs"*/}
+                    {/*        // onKeyUp={handleKeyDown}*/}
+                    {/*        onKeyDown={handleKeyDown}*/}
+                    {/*        placeholder="Ask what you want to know!"*/}
+                    {/*        className="w-full max-w-full h-9 md:h-8 border border-gray-300 bg-gray-100 rounded-full text-sm md:text-base text-black pl-8 pr-16 py-2 font-mono font-bold resize-none focus:outline-none focus:border-gray-500"*/}
+                    {/*    />*/}
+                    {/*        <button*/}
+                    {/*            className="absolute right-4 top-1/2 transform -translate-y-1/2 px-2 py-1 md:px-4 md:py-2 bg-green-500 text-white rounded-full flex items-center justify-center cursor-pointer"*/}
+                    {/*            onClick={() => {*/}
+                    {/*                const prompt = document.getElementById('prompt_inputs').value;*/}
+                    {/*                if (prompt.length > 0) {*/}
+                    {/*                    getResponseFromAI(prompt);*/}
+                    {/*                    document.getElementById('prompt_inputs').value = '';*/}
+                    {/*                    setQuestion(prompt);*/}
+                    {/*                    setResponse(null);*/}
+                    {/*                }*/}
+                    {/*            }}*/}
+                    {/*        >*/}
+                    {/*            <FontAwesomeIcon icon={faPaperPlane} fontSize={20}/>*/}
+                    {/*        </button>*/}
+                    {/*    </div>*/}
+                    {/*    <small></small>*/}
+                    {/*</div>*/}
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

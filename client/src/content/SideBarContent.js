@@ -4,11 +4,14 @@ import {Box, IconButton, Typography, useTheme} from "@mui/material";
 import { Sidebar, Menu, MenuItem} from "react-pro-sidebar";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import {Card} from 'react-bootstrap'
+import useIsMobile from "../hooks/useIsMobile";
 
 const SideBarContent = ({isCollapsed,updateIsCollapsed}) => {
-
+    const isMobile = useIsMobile();
     return(
     <Container>
+        {isMobile && isCollapsed ?<></>
+            :
         <Box className="sideBar">
             <Sidebar collapsed={isCollapsed} style={{height:'100vh'}}>
                 <Menu iconShape="square">
@@ -57,7 +60,7 @@ const SideBarContent = ({isCollapsed,updateIsCollapsed}) => {
 
                 </Menu>
             </Sidebar>
-        </Box>
+        </Box>}
     </Container>
     );
 }
