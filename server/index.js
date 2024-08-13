@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
-const port = 8002;
+const port = process.env.PORT || 4000;
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
