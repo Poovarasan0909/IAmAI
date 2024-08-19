@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useContext, useRef, useState} from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPaperPlane} from '@fortawesome/free-solid-svg-icons';
 import LoaderActive from '../loader/LoaderActive';
@@ -13,6 +13,12 @@ import SideBarContent from "./SideBarContent";
 import useIsMobile from "../hooks/useIsMobile";
 import {IconButton} from "@mui/material";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import {useNavigate} from "react-router-dom";
+import {UserContext} from "../context/UserContext";
+import userDefaultImage from "../css/9187604.png"
+import Dropdown from 'react-bootstrap/Dropdown';
+import UserProfile from "./UserProfile";
+import {postRequest} from "../API_helper/APIs";
 
 
 const GeminiApi = () => {
@@ -21,16 +27,37 @@ const GeminiApi = () => {
     const [question, setQuestion] = useState('');
     const [loading, setLoading] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(true);
-    const [textareaHeight, setTextareaHeight] = useState('2rem');
+    const [textareaHeight, setTextareaHeight] = useState('2.5rem');
     const textareaRef = useRef(null);
     const [previousLineCount, setPreviousLineCount] = useState(1);
     const [codeLanguageName, setCodeLanguageName] = useState('');
     const isMobile = useIsMobile();
+    const [historyList, setHistoryList] = useState([]);
+
+    const { state, setState } = useContext(UserContext);
+
+    const storeSearchHistory = (response, prompt) => {
+        postRequest('createUserData', {
+            userId: state.user._id,
+            prompt: prompt,
+            response: response
+        })
+        setHistoryList([{prompt: prompt, response: response}, ...historyList])
+    }
 
     const getResponseFromAI = async (prompt) => {
-        let inst = 'Instruction: If anybody asked your name, tell them "My name is Poovarasan, and I developed this site. ' +
-            'if anybody ask who is varshini, you can describe one content she is very cute and beautiful girl, Prompt: "'
-        inst += prompt;
+        let inst = '';
+
+        const nameRegex = /what.*your.*name|who.*are.*you|can.*say.*your.*name|tell.*your.*name/i;
+        const name1Regex = /who.*is.*varshini|tell.*me.*about.*varshini|can.*you.*say.*about.*varshini/i;
+        if (nameRegex.test(prompt)) {
+            inst += 'If anybody asks your name, tell them "My name is Poovarasan" ';
+        }
+
+        if (name1Regex.test(prompt)) {
+            inst += 'If anybody asks who is varshini, you can describe her as a very cute and beautiful girl.';
+        }
+        inst += 'Prompt: "' + prompt + '"';
         setLoading(true);
         const {GoogleGenerativeAI} = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
@@ -40,21 +67,25 @@ const GeminiApi = () => {
             const model = genAI.getGenerativeModel({ model: "gemini-pro" });
             const result = await model.generateContent(inst);
             const response = await result.response;
+            return {response: response.text(), prompt: prompt};
+
+            /* Testing response code */
             // await fetch(testResponse)
             //     .then(response => response.text())
             //     .then(data => {
             //         testRes = data
             //     })
-            return response.text();
+            // return testRes;
         };
 
         run().then(res => {
-            const formattedResponse = reformatResponse(res);
+            const formattedResponse = reformatResponse(res.response);
             if (document.getElementById("response_element"))
                 document.getElementById("response_element").innerHTML = '';
             formattedResponse.forEach(element =>
                 document.getElementById("response_element")?.appendChild(element)
             );
+            storeSearchHistory(res.response, res.prompt);
             setLoading(false);
         });
     };
@@ -212,13 +243,13 @@ const GeminiApi = () => {
 
         document.getElementById('prompt_inputs').addEventListener('keyup', function () {
             const lines = calculateLines(this);
-            adjustTextareaHeight((lines * 22));
+            adjustTextareaHeight(lines * (lines === 1 ? 36 : 22));
         });
     };
 
 
     const adjustTextareaHeight = (scrollHeight) => {
-        setTextareaHeight('1.5rem');
+        setTextareaHeight('2.5rem');
         const prompt_inputs = document.getElementById("prompt_inputs");
         if (scrollHeight) {
             setTextareaHeight(`${scrollHeight}px`);
@@ -235,7 +266,7 @@ const GeminiApi = () => {
     return (
         <>
             {isMobile && isCollapsed &&
-            <div style={{display: 'flex', alignItems: "center", width: '100%'}}>
+            <div className={'mt-2'} style={{display: 'flex', alignItems: "center", width: '100%'}}>
                 <IconButton onClick={() => updateIsCollapsed(!isCollapsed)}>
                     <MenuOutlinedIcon/>
                 </IconButton>&nbsp;&nbsp;
@@ -243,7 +274,17 @@ const GeminiApi = () => {
             </div>}
             <div className="main-container">
                 <div className="title-container" style={isCollapsed ? {width: 0} : {width: '10%'}}>
-                    <SideBarContent isCollapsed={isCollapsed} updateIsCollapsed={updateIsCollapsed}></SideBarContent>
+                    <SideBarContent
+                        reformatResponse={reformatResponse}
+                        isCollapsed={isCollapsed}
+                        setResponse={setResponse}
+                        setQuestion={setQuestion}
+                        setHistoryList={setHistoryList}
+                        historyList={historyList}
+                        updateIsCollapsed={updateIsCollapsed}>
+                    </SideBarContent>
+                    {!isMobile && isCollapsed && <> &nbsp;&nbsp;&nbsp;&nbsp;
+                    <h2 style={{fontSize: 'xx-large'}} className="title" >IAmAI</h2></>}
                 </div>
                 <div className="parent-container" style={isCollapsed ? {width: '100%'} : {width: '90%'}}>
                     {response ?
@@ -256,7 +297,7 @@ const GeminiApi = () => {
                             </div>
                         </div>
                         :
-                        <div style={{position:'relative', bottom:'100px'}}>
+                        <div style={{position: 'relative', bottom: '100px'}} className={'user-select-none'} >
                             <img className="robot-image" src={robot} style={{height: '22rem'}}
                                  alt={"loading...."}/>
                         </div>}
@@ -286,35 +327,7 @@ const GeminiApi = () => {
                             </button>
                         </div>
                     </div>
-
-                    {/*<div className="fixed bottom-3 left-0 w-8/12 bg-gray-100 flex justify-center items-center">*/}
-                    {/*    <div className="relative w-full">*/}
-                    {/*    <textarea*/}
-                    {/*        ref={textareaRef}*/}
-                    {/*        style={{height: textareaHeight, maxHeight: '190px'}}*/}
-                    {/*        id="prompt_inputs"*/}
-                    {/*        // onKeyUp={handleKeyDown}*/}
-                    {/*        onKeyDown={handleKeyDown}*/}
-                    {/*        placeholder="Ask what you want to know!"*/}
-                    {/*        className="w-full max-w-full h-9 md:h-8 border border-gray-300 bg-gray-100 rounded-full text-sm md:text-base text-black pl-8 pr-16 py-2 font-mono font-bold resize-none focus:outline-none focus:border-gray-500"*/}
-                    {/*    />*/}
-                    {/*        <button*/}
-                    {/*            className="absolute right-4 top-1/2 transform -translate-y-1/2 px-2 py-1 md:px-4 md:py-2 bg-green-500 text-white rounded-full flex items-center justify-center cursor-pointer"*/}
-                    {/*            onClick={() => {*/}
-                    {/*                const prompt = document.getElementById('prompt_inputs').value;*/}
-                    {/*                if (prompt.length > 0) {*/}
-                    {/*                    getResponseFromAI(prompt);*/}
-                    {/*                    document.getElementById('prompt_inputs').value = '';*/}
-                    {/*                    setQuestion(prompt);*/}
-                    {/*                    setResponse(null);*/}
-                    {/*                }*/}
-                    {/*            }}*/}
-                    {/*        >*/}
-                    {/*            <FontAwesomeIcon icon={faPaperPlane} fontSize={20}/>*/}
-                    {/*        </button>*/}
-                    {/*    </div>*/}
-                    {/*    <small></small>*/}
-                    {/*</div>*/}
+                  <UserProfile state={state} setState={setState}/>
                 </div>
             </div>
         </>

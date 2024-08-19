@@ -1,12 +1,48 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import styled from "styled-components";
 import {Box, IconButton, Typography, useTheme} from "@mui/material";
 import { Sidebar, Menu, MenuItem} from "react-pro-sidebar";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import {Card} from 'react-bootstrap'
 import useIsMobile from "../hooks/useIsMobile";
+import {UserContext} from "../context/UserContext";
+import {getRequest} from "../API_helper/APIs";
+import {useNavigate} from "react-router-dom";
 
-const SideBarContent = ({isCollapsed,updateIsCollapsed}) => {
+
+const SideBarContent = ({isCollapsed,updateIsCollapsed, reformatResponse, setResponse, setQuestion, historyList, setHistoryList}) => {
+    const { state, setState } = useContext(UserContext);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+       console.log("SideBarContent_entered......", state.user?._id)
+        const userId = state.user?._id;
+       if(userId) {
+         getRequest(`getUserDataById/${userId}`).then((res) => {
+            console.log(res.data, "Dsdssdssdsdsd")
+             setHistoryList(res.data.reverse());
+        })
+           }
+    }, [state]);
+
+    const handleOnHistoryResponse = (response, prompt) => {
+        if (document.getElementById("response_element"))
+            document.getElementById("response_element").innerHTML = '';
+        setResponse(true);
+        setQuestion(prompt);
+        const formattedResponse = reformatResponse(response);
+        setTimeout(() => {
+            formattedResponse.forEach(element =>
+                document.getElementById("response_element")?.appendChild(element)
+            );
+        }, 400)
+        if(isMobile)
+            updateIsCollapsed(!isCollapsed);
+    }
+
+    const makeFirstLetterCaps = (value) => {
+        const firstChar = value.charAt(0).toUpperCase();
+        return firstChar + value.substring(1);
+    }
     const isMobile = useIsMobile();
     return(
     <Container>
@@ -37,28 +73,33 @@ const SideBarContent = ({isCollapsed,updateIsCollapsed}) => {
                           </Box>
                       )}
                   </MenuItem>
-                {!isCollapsed && (
-                    <Box mb="25px">
-                        <Box textAlign="center">
-                            <Typography
-                                variant="h6"
-                                color={'gray'}
-                                fontWeight="bold"
-                                sx={{ m: "10px 0 0 0" }}
-                            >
-                             Coming Soon....
-                            </Typography>
-                         <br/>
-                            <Card>
-                                <Card.Body style={{padding : '0 20px'}}>
-                                    Developed by <u>Poovarasan</u>
-                                </Card.Body>
-                            </Card>
-                        </Box>
-                    </Box>
+                {!isCollapsed && (<>
+                        {state.user ? <>
+                            <div>
+                                <b>History</b>
+                            </div>
+                            {historyList && historyList.map((his) => (
+                                <div
+                                    className={'truncate cursor-pointer py-1 px-2 border-l-2 rounded hover:bg-blue-200'}
+                                    onClick={() => handleOnHistoryResponse(his.response, his.prompt)}>
+                                    {makeFirstLetterCaps(his.prompt)}
+                                </div>
+                            ))
+                            }</> :
+                            <div className={'text-center mt-12'}>
+                                <h6>Sign in to access additional benefits.</h6>
+                                <button
+                                    className={`cursor-pointer mr-3 inline-flex items-center rounded-full lg:px-4 py-1 text-1xl font-mono font-semibold text-blue-600
+                            hover:text-white border-2 border-blue-600 hover:bg-blue-600 transition ease-in-out delay-150 hover:translate-y-1 hover:scale-75 duration-300 focus:bg-transparent max-md:px-1`}
+                                    onClick={() => navigate("/IAmAI/signin")}>
+                                    Sign in
+                                </button>
+                            </div>
+                        }
+                    </>
                 )}
-
                 </Menu>
+                {!isCollapsed && <small className={'absolute bottom-0 '}> Developed by <u>Poovarasan</u></small>}
             </Sidebar>
         </Box>}
     </Container>
@@ -67,7 +108,7 @@ const SideBarContent = ({isCollapsed,updateIsCollapsed}) => {
 
 export default SideBarContent;
 
-const Item = ({ title, to, icon, selected, setSelected }) => {
+const Item = ({title, to, icon, selected, setSelected}) => {
     // const theme = useTheme();
     // const colors = tokens(theme.palette.mode);
     return (
