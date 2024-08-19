@@ -84,8 +84,10 @@ const SideBarContent = ({isCollapsed,updateIsCollapsed, reformatResponse, setRes
                                     onClick={() => handleOnHistoryResponse(his.response, his.prompt)}>
                                     {makeFirstLetterCaps(his.prompt)}
                                 </div>
-                            ))
-                            }</> :
+                            ))}
+                            {historyList && historyList.length === 0 &&
+                                <h6 className={'text-center mt-12'}>No History Found Yet</h6>}
+                            </> :
                             <div className={'text-center mt-12'}>
                                 <h6>Sign in to access additional benefits.</h6>
                                 <button

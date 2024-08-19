@@ -85,8 +85,9 @@ const GeminiApi = () => {
             formattedResponse.forEach(element =>
                 document.getElementById("response_element")?.appendChild(element)
             );
-            storeSearchHistory(res.response, res.prompt);
             setLoading(false);
+            if(state.user)
+               storeSearchHistory(res.response, res.prompt);
         });
     };
 
