@@ -49,14 +49,10 @@ const GeminiApi = () => {
         let inst = '';
 
         const nameRegex = /what.*your.*name|who.*are.*you|can.*say.*your.*name|tell.*your.*name/i;
-        const name1Regex = /who.*is.*varshini|tell.*me.*about.*varshini|can.*you.*say.*about.*varshini/i;
         if (nameRegex.test(prompt)) {
             inst += 'If anybody asks your name, tell them "My name is Poovarasan" ';
         }
 
-        if (name1Regex.test(prompt)) {
-            inst += 'If anybody asks who is varshini, you can describe her as a very cute and beautiful girl.';
-        }
         inst += 'Prompt: "' + prompt + '"';
         setLoading(true);
         const {GoogleGenerativeAI} = require("@google/generative-ai");
