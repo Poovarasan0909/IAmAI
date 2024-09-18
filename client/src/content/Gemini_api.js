@@ -2,7 +2,6 @@ import React, {useContext, useRef, useState} from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPaperPlane} from '@fortawesome/free-solid-svg-icons';
 import LoaderActive from '../loader/LoaderActive';
-import testResponse from '../responseTest';
 import robot from '../css/webp/robot_avatar.webp';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-javascript.min.js'; // Import the language you need
@@ -11,14 +10,14 @@ import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-dark.css';
 import SideBarContent from "./SideBarContent";
 import useIsMobile from "../hooks/useIsMobile";
-import {IconButton} from "@mui/material";
+import {CircularProgress, IconButton} from "@mui/material";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import {useNavigate} from "react-router-dom";
 import {UserContext} from "../context/UserContext";
-import userDefaultImage from "../css/9187604.png"
-import Dropdown from 'react-bootstrap/Dropdown';
 import UserProfile from "./UserProfile";
 import {postRequest} from "../API_helper/APIs";
+import TaskAlt from '@mui/icons-material/TaskAlt';
+import {AppContext} from "../context/AppContext";
+
 
 
 const GeminiApi = () => {
@@ -35,6 +34,13 @@ const GeminiApi = () => {
     const [historyList, setHistoryList] = useState([]);
 
     const { state, setState } = useContext(UserContext);
+    const {isServerActive, isServerMsgVisible} = useContext(AppContext);
+
+    const fetchResponse = async (prompt) => {
+        return postRequest('/geminiAI-data', {
+            prompt: prompt
+        });
+    }
 
     const storeSearchHistory = (response, prompt) => {
         postRequest('createUserData', {
@@ -55,15 +61,16 @@ const GeminiApi = () => {
 
         inst += 'Prompt: "' + prompt + '"';
         setLoading(true);
-        const {GoogleGenerativeAI} = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
         setResponse(true);
         let testRes = null;
         const run = async () => {
-            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-            const result = await model.generateContent(inst);
-            const response = await result.response;
-            return {response: response.text(), prompt: prompt};
+            try {
+                const {data} = await fetchResponse(inst);
+                return {response: data.res, prompt: prompt};
+            } catch (err) {
+                console.error(err);
+                return {response: '!ERROR  : Something Went Wrong', prompt: prompt};
+            }
 
             /* Testing response code */
             // await fetch(testResponse)
@@ -285,7 +292,7 @@ const GeminiApi = () => {
                 </div>
                 <div className="parent-container" style={isCollapsed ? {width: '100%'} : {width: '90%'}}>
                     {response ?
-                        <div id="res" className="response_container">
+                        <div id="res" className="response_container shadow rounded-2">
                             <div className="question_header">{question}</div>
                             {question.length > 0 && <div className="horizontal-line"></div>}
                             <div>
@@ -298,6 +305,18 @@ const GeminiApi = () => {
                             <img className="robot-image" src={robot} style={{height: '22rem'}}
                                  alt={"loading...."}/>
                         </div>}
+                    <div className={'flex'}>
+                        {isServerMsgVisible &&
+                            (!isServerActive ?
+                            <>
+                                <CircularProgress style={{width: '20px', height: '20px'}} color="inherit"/>
+                                <pre className={'px-2'}>server starting, please wait...</pre>
+                            </> :
+                            <> <TaskAlt style={{width: '20px', height: '20px'}} color={'success'}/>
+                                <pre>server started.</pre>
+                            </>)
+                        }
+                    </div>
                     <div className="input-portion">
                         <div className="textarea-wrapper">
                     <textarea
@@ -306,10 +325,12 @@ const GeminiApi = () => {
                         id="prompt_inputs"
                         onKeyUp={handleKeyDown}
                         onKeyDown={handleKeyDown}
+                        disabled={!isServerActive}
                         placeholder="Ask what you want to know!"
                     />
                             <button
                                 className="sent_button"
+                                disabled={!isServerActive}
                                 onClick={() => {
                                     const prompt = document.getElementById("prompt_inputs").value;
                                     if (prompt.length > 0) {

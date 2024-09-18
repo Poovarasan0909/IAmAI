@@ -1,16 +1,24 @@
-import React from 'react';
 import axios from "axios";
 import packageJson from '../../package.json';
 
 const baseURL = packageJson.baseURL;
 
-export const postRequest = (url,data) => {
+export const postRequest = async (url,data) => {
     const path = url.replace(/^\//, '');
-    console.log(`${baseURL}/${path}`, data)
-   return axios.post(`${baseURL}/${path}`, data);
+    try {
+        return await axios.post(`${baseURL}/${path}`, data);
+    } catch (error) {
+        console.error("Error during post request:", error.message);
+        return { error: error.message };
+    }
 }
 
-export const getRequest = (url) => {
+export const getRequest = async (url) => {
     const path = url.replace(/^\//, '');
-    return axios.get(`${baseURL}/${path}`);
+    try {
+        return await axios.get(`${baseURL}/${path}`);
+    } catch (error) {
+        console.error('Error during getRequest:', error.message);
+        return { error: error.message };
+    }
 }

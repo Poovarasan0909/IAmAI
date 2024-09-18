@@ -4,15 +4,6 @@ const Test = require('../models/testModels');
 const users = require('../models/usersModel');
 const {createUser, createUserData, deleteUserDataById, deleteUserById, checkIsUserExit, getUserDataByUserId} = require('../managers/userManager');
 
-router.get('/all-test', async (req, res) => {
-    try{
-        const tests = await Test.find();
-        res.status(200).json(tests);
-    } catch (error) {
-       res.status(400).send('Error fetching '+ error.message);
-    }
-});
-
 router.get('/createModule', async (req, res) => {
     try{
         const tests = await users.find();
