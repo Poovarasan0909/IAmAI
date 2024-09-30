@@ -64,7 +64,7 @@ const usePopupMessage = (timeout = 5000) => {
                     popupRootRef.current.unmount();
                     popupRootRef.current = null;
                 }
-                setMessage(null)
+                setMessage(null);
             }, timeout)
 
             return () => clearTimeout(timer);

@@ -8,6 +8,7 @@ import usePopupMessage from "../hooks/usePopupMessage";
 import {CircularProgress} from "@mui/material";
 import TaskAlt from "@mui/icons-material/TaskAlt";
 import {AppContext} from "../context/AppContext";
+import ThemeButton from "../content/ThemeButton";
 
 
 const SignUpAndSignIn = ({formType}) => {
@@ -22,6 +23,18 @@ const SignUpAndSignIn = ({formType}) => {
                                                                                 isAtleast1Lower: false, isAnyNumber: false, isValidPass: false});
     const showMessage = usePopupMessage(5000);
     const {isServerActive, isServerMsgVisible} = useContext(AppContext);
+
+    // useEffect(() => {
+    //     const handleKeyDown = (e) => {
+    //         if(e.key === 'Enter') {
+    //             handleOnSubmit();
+    //         }
+    //     };
+    //     document.addEventListener('keyup', handleKeyDown);
+    //     return () => {
+    //         document.removeEventListener('keyup', handleKeyDown);
+    //     };
+    // }, []);
 
 
     const handleOnSubmit = () => {
@@ -60,7 +73,7 @@ const SignUpAndSignIn = ({formType}) => {
                         setIsloading(false);
                     })
             } else {
-            showMessage('Email/Password are required', 'error')
+              showMessage('Email/Password are required', 'error')
         }
         }
     }
@@ -70,17 +83,13 @@ const SignUpAndSignIn = ({formType}) => {
         const hasUpperCase = /[A-Z]/.test(value);
         const hasNumber = /\d/.test(value);
         const hasMin8Length = value && value.length >= 8;
-        if(hasLowerCase && hasUpperCase && hasNumber && hasMin8Length) {
-            setPasswordValidation({
-                isMin8Char: hasMin8Length, isAnyNumber: hasNumber,
-                isAtleast1Caps: hasUpperCase, isAtleast1Lower: hasLowerCase, isValidPass: true
-            })
-        } else {
-            setPasswordValidation({
-                isMin8Char: hasMin8Length, isAnyNumber: hasNumber,
-                isAtleast1Caps: hasUpperCase, isAtleast1Lower: hasLowerCase, isValidPass: false
-            })
-        }
+        setPasswordValidation({
+           isMin8Char: hasMin8Length,
+           isAnyNumber: hasNumber,
+           isAtleast1Caps: hasUpperCase,
+           isAtleast1Lower: hasLowerCase,
+           isValidPass: hasLowerCase && hasUpperCase && hasNumber && hasMin8Length,
+        });
    }
 
     const clearValues = () => {
@@ -88,11 +97,13 @@ const SignUpAndSignIn = ({formType}) => {
         setUserEmail('')
         setUserPassword('')
     }
+
     return (
         <>
-            {/*<Container className="d-flex justify-content-center align-items-center vh-50" style={{width: '50%', paddingTop: '10px'}}>*/}
-            {/*<Card className={'signin-signup-card'}>*/}
-            <div className={'flex min-h-full flex-col justify-center px-6 py-12 lg:px-8'}>
+            <div className={'flex relative min-h-full flex-col justify-center px-6 py-12 lg:px-8 dark:bg-[rgba(52,52,52)]'}>
+                <div className={'absolute right-3 top-3'}>
+                   <ThemeButton/>
+                </div>
                 <div className="absolute top-4 left-4">
                     <button onClick={() => navigate('/')}
                             className="flex items-center text-indigo-600 hover:text-indigo-500">
@@ -105,13 +116,13 @@ const SignUpAndSignIn = ({formType}) => {
                 </div>
 
                 <div className={'sm:mx-auto sm:w-full sm:max-w-sm'}>
-                    <h2 className={'mt-2 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900'}>{isSignUp ? 'Sign up to create your account' : 'Sign in your account'} </h2>
+                    <h2 className={'mt-2 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 dark:text-white'}>{isSignUp ? 'Sign up to create your account' : 'Sign in your account'} </h2>
                 </div>
                 <div className={'mt-7 sm:mx-auto sm:w-full sm:max-w-sm'}>
                     <div className={'space-y-6'}>
                         {isSignUp && <div>
                             <label htmlFor="userName"
-                                   className="block text-sm font-medium leading-6 text-gray-900"> User Name </label>
+                                   className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"> User Name </label>
                             <div className={'mt-2'}>
                                 <input id="userName" type="text" value={userName} name="userName"
                                        placeholder={"User Name"}
@@ -122,7 +133,7 @@ const SignUpAndSignIn = ({formType}) => {
                         </div>}
                         <div>
                             <label htmlFor={"user-email"}
-                                   className="block text-sm font-medium leading-6 text-gray-900"> Email </label>
+                                   className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"> Email </label>
                             <div className={'mt-2'}>
                                 <input id="user-email" value={userEmail} type="email" name={"user-email"}
                                        placeholder={'Email '}
@@ -134,7 +145,7 @@ const SignUpAndSignIn = ({formType}) => {
                         <div>
                             <div className={'flex items-center justify-between'}>
                                 <label htmlFor={"user-login-password"}
-                                       className={"block text-sm font-medium leading-6 text-gray-900"}>
+                                       className={"block text-sm font-medium leading-6 text-gray-900 dark:text-white"}>
                                     Password
                                 </label>
                                 {!isSignUp &&
@@ -154,9 +165,10 @@ const SignUpAndSignIn = ({formType}) => {
                                            handlePasswordValidation(event.target.value)
                                        }}/>
                             </div>
+                            {isSignUp &&
                             <div className={userPassword.length < 1 && 'hidden'}>
                                 <label htmlFor={"user-login-password"}
-                                       className={"block text-sm font-medium leading-6 py-1 text-gray-900"}>
+                                       className={"block text-sm font-medium leading-6 py-1 text-gray-900 dark:text-white"}>
                                     Password must contain the following:
                                 </label>
                                 <div className={`grid grid-cols-2 gap-1`} style={{fontSize: '0.8em'}}>
@@ -185,7 +197,7 @@ const SignUpAndSignIn = ({formType}) => {
                                         uppercase letter
                                     </div>
                                 </div>
-                            </div>
+                            </div> }
                         </div>
                         <div>
                             <button onClick={() => handleOnSubmit()}
@@ -206,7 +218,7 @@ const SignUpAndSignIn = ({formType}) => {
                         </div>
                     </div>
                     {isSignUp ?
-                        <p className={"mt-2 text-center text-sm text-gray-500"}>
+                        <p className={"mt-2 text-center text-sm text-gray-500 dark:text-white"}>
                             Already have account?
                             <span onClick={() => {
                                 clearValues();
@@ -214,7 +226,7 @@ const SignUpAndSignIn = ({formType}) => {
                             }}
                                   className={'font-semibold leading-6 text-indigo-600 hover:text-indigo-500 underline hover:cursor-pointer'}> Sign in</span>
                         </p> :
-                        <p className={"mt-10 text-center text-sm text-gray-500"}>
+                        <p className={"mt-10 text-center text-sm text-gray-500 dark:text-white"}>
                             I don't have an account.
                             <span onClick={() => {
                                 clearValues();
@@ -224,7 +236,7 @@ const SignUpAndSignIn = ({formType}) => {
                         </p>
                     }
                 </div>
-                <div className={'flex center pt-3'}>
+                <div className={'flex center pt-3 dark:text-white'}>
                     {isServerMsgVisible &&
                         (!isServerActive ?
                             <>
@@ -237,7 +249,6 @@ const SignUpAndSignIn = ({formType}) => {
                     }
                 </div>
             </div>
-            {/*</Card></Container>*/}
         </>
     )
 }

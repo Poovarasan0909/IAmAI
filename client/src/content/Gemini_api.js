@@ -1,40 +1,34 @@
 import React, {useContext, useRef, useState} from "react";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faPaperPlane} from '@fortawesome/free-solid-svg-icons';
 import LoaderActive from '../loader/LoaderActive';
-import robot from '../css/webp/robot_avatar.webp';
-import Prism from 'prismjs';
-import 'prismjs/components/prism-javascript.min.js'; // Import the language you need
-import 'prismjs/components/prism-markup.min.js';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/themes/prism-dark.css';
-import SideBarContent from "./SideBarContent";
+import robot from '../css/webp/ro.webp';
 import useIsMobile from "../hooks/useIsMobile";
-import {CircularProgress, IconButton} from "@mui/material";
+import {CircularProgress, IconButton, Paper} from "@mui/material";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import {UserContext} from "../context/UserContext";
 import UserProfile from "./UserProfile";
 import {postRequest} from "../API_helper/APIs";
 import TaskAlt from '@mui/icons-material/TaskAlt';
 import {AppContext} from "../context/AppContext";
-
-
+import SideBar from "./SideBar";
+import iamaiLogo from "../css/IAMAI-19-09-2024.png";
+import SendIcon from '@mui/icons-material/Send';
+import {markedResponse} from "./markedResponse";
 
 const GeminiApi = () => {
 
     const [response, setResponse] = useState(false);
     const [question, setQuestion] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isCollapsed, setIsCollapsed] = useState(true);
-    const [textareaHeight, setTextareaHeight] = useState('2.5rem');
+    const [isSideBarOpen, setIsSideBarOpen] = useState(false);
+    const [textareaHeight, setTextareaHeight] = useState('4.5rem');
     const textareaRef = useRef(null);
     const [previousLineCount, setPreviousLineCount] = useState(1);
-    const [codeLanguageName, setCodeLanguageName] = useState('');
     const isMobile = useIsMobile();
     const [historyList, setHistoryList] = useState([]);
 
     const { state, setState } = useContext(UserContext);
     const {isServerActive, isServerMsgVisible} = useContext(AppContext);
+    const responseFormateRef = useRef(null);
 
     const fetchResponse = async (prompt) => {
         return postRequest('/geminiAI-data', {
@@ -50,6 +44,14 @@ const GeminiApi = () => {
         })
         setHistoryList([{prompt: prompt, response: response}, ...historyList])
     }
+    const escapeHTML = (str) => {
+        return str.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
 
     const getResponseFromAI = async (prompt) => {
         let inst = '';
@@ -82,107 +84,117 @@ const GeminiApi = () => {
         };
 
         run().then(res => {
-            const formattedResponse = reformatResponse(res.response);
             if (document.getElementById("response_element"))
                 document.getElementById("response_element").innerHTML = '';
-            formattedResponse.forEach(element =>
-                document.getElementById("response_element")?.appendChild(element)
-            );
+            markedResponse(res.response);
             setLoading(false);
             if(state.user)
                storeSearchHistory(res.response, res.prompt);
         });
     };
 
-    const reformatResponse = (text) => {
-        const lines = text?.split('\n');
-        const formattedResponse = [];
-        const spaceStarCheck = /^\s*\*/gm;
-        const spaceHypenCheck = /^\s*-/gm;
-
-        let isCodeFirstLine = false;
-        let isCodeLine = '';
-        let codeContainer = document.createElement('div');
-        codeContainer.className = "code_block";
-        lines.forEach((line, index) => {
-            const codeElement = document.createElement('code');
-            const preElement = document.createElement('pre');
-            const language = codeLanguageName;
-            preElement.key = `code-block-${index}`
-            line = line.replace(/^s+/, '');
-            if (line.startsWith("```") || line.endsWith("```")) {
-                const completeCodeLine = /```([\s\S]*?)```/g;
-                if (completeCodeLine.test(line)) {
-                    codeElement.className = `language-${language}`
-                    codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
-                    preElement.appendChild(codeElement);
-                    codeContainer.appendChild(preElement);
-                    formattedResponse.push(codeContainer);
-                    codeContainer = document.createElement('div');
-                    codeContainer.className = "code_block";
-                    isCodeLine = 'oneLine';
-                } else {
-                    if (isCodeLine === '') {
-                        codeElement.className = `language-${language}`
-                        codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
-                        setCodeLanguageName(line.replace(/```/g, ""));
-                        preElement.appendChild(codeElement);
-                        preElement.className = 'name-of-language'
-                        codeContainer.appendChild(preElement);
-                        isCodeLine = 'start';
-                        isCodeFirstLine = true;
-                    } else if (isCodeLine === 'start') {
-                        codeElement.className = `language-${language}`;
-                        codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
-                        preElement.appendChild(codeElement);
-                        codeContainer.appendChild(preElement);
-                        formattedResponse.push(codeContainer);
-                        codeContainer = document.createElement('div');
-                        codeContainer.className = "code_block";
-                        isCodeLine = 'end';
-                    }
-                }
-            } else isCodeFirstLine = false;
-
-            if (isCodeLine === 'start' && !isCodeFirstLine) {
-                codeElement.className = `language-${language}`
-                codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
-                preElement.appendChild(codeElement);
-                codeContainer.appendChild(preElement);
-            }
-            if ([''].includes(isCodeLine)) {
-                if (line.startsWith("**")) {
-                    const customElement = document.createElement('div');
-                    customElement.innerHTML = `<strong style="color: #000000;">${line.replace(/\*\*/g, '')}</strong>`;
-                    formattedResponse.push(customElement);
-                } else if (line.startsWith("- **") || line.startsWith("* **")) {
-                    const starLine = line.replace(/^[*-]/g, '').split('**');
-                    const customElement = document.createElement('div');
-                    customElement.innerHTML = `<li key=${index}><strong>${starLine[1]}</strong>&nbsp;<small>${starLine[2]}</small></li>`;
-                    formattedResponse.push(customElement);
-                } else if (line.startsWith("- ") || line.startsWith("* ")) {
-                    const customElement = document.createElement('div');
-                    customElement.innerHTML = `<li key=${index}>${line.substring(2)}</li>`;
-                    formattedResponse.push(customElement);
-                } else if (spaceStarCheck.test(line) || spaceHypenCheck.test(line)) {
-                    const customElement = document.createElement('div');
-                    customElement.innerHTML = `<li key=${index}>${line.replace(/^[-*]/, '')}</li>`;
-                    formattedResponse.push(customElement);
-                } else if (line.length === 0) {
-                    const emptyDiv = document.createElement('div');
-                    emptyDiv.style.height = '10px';
-                    formattedResponse.push(emptyDiv);
-                } else {
-                    const customElement = document.createElement('div');
-                    customElement.innerHTML = `<p key=${index}>&emsp;&emsp;${line}</p>`;
-                    formattedResponse.push(customElement);
-                }
-            }
-            if (isCodeLine === 'end' || isCodeLine === 'oneLine')
-                isCodeLine = '';
-        });
-        return formattedResponse;
-    };
+    // const reformatResponse = (text) => {
+    //     const lines = text?.split('\n');
+    //     const formattedResponse = [];
+    //     const spaceStarCheck = /^\s*\*/gm;
+    //     const spaceHypenCheck = /^\s*-/gm;
+    //
+    //     let isCodeFirstLine = false;
+    //     let isCodeLine = '';
+    //     let codeContainer = document.createElement('div');
+    //     codeContainer.className = "code_block";
+    //     lines.forEach((line, index) => {
+    //         const codeElement = document.createElement('code');
+    //         const preElement = document.createElement('pre');
+    //         const language = codeLanguageName;
+    //         preElement.key = `code-block-${index}`
+    //         line = line.replace(/^s+/, '');
+    //         if (line.startsWith("```") || line.endsWith("```")) {
+    //             const completeCodeLine = /```([\s\S]*?)```/g;
+    //             if (completeCodeLine.test(line)) {
+    //                 codeElement.className = `language-${language}`
+    //                 codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
+    //                 preElement.appendChild(codeElement);
+    //                 codeContainer.appendChild(preElement);
+    //                 formattedResponse.push(codeContainer);
+    //                 codeContainer = document.createElement('div');
+    //                 codeContainer.className = "code_block";
+    //                 isCodeLine = 'oneLine';
+    //             } else {
+    //                 if (isCodeLine === '') {
+    //                     codeElement.className = `language-${language}`
+    //                     codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
+    //
+    //                     setCodeLanguageName(line.replace(/```/g, ""));
+    //                     preElement.appendChild(codeElement);
+    //                     preElement.className = 'name-of-language border-b border-white-500'
+    //                     codeContainer.appendChild(preElement);
+    //                     isCodeLine = 'start';
+    //                     isCodeFirstLine = true;
+    //                 } else if (isCodeLine === 'start') {
+    //                     codeElement.className = `language-${language}`;
+    //                     codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
+    //                     preElement.appendChild(codeElement);
+    //                     codeContainer.appendChild(preElement);
+    //                     formattedResponse.push(codeContainer);
+    //                     codeContainer = document.createElement('div');
+    //                     codeContainer.className = "code_block";
+    //                     isCodeLine = 'end';
+    //                 }
+    //             }
+    //         } else isCodeFirstLine = false;
+    //
+    //         if (isCodeLine === 'start' && !isCodeFirstLine) {
+    //             codeElement.className = `language-${language}`
+    //             codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
+    //             preElement.appendChild(codeElement);
+    //             codeContainer.appendChild(preElement);
+    //         }
+    //         console.log(line, " __outside...",)
+    //         if ([''].includes(isCodeLine)) {
+    //             if (line.startsWith("**")) {
+    //                 const customElement = document.createElement('div');
+    //                 customElement.innerHTML = `<strong class='dark:text-blue-400 text-zinc-900'>${line.replace(/\*\*/g, '')}</strong>`;
+    //                 formattedResponse.push(customElement);
+    //             } else if (line.startsWith("- **") || line.startsWith("* **")) {
+    //                 // console.error(line , "_inside..");
+    //                 const starLine = line.replace(/^[*-]/g, '').split('**');
+    //                 const customElement = document.createElement('div');
+    //                 customElement.innerHTML = `<li key=${index}><strong>${escapeHTML(starLine[1])}</strong>&nbsp;<small>${escapeHTML(starLine[2])}</small></li>`;
+    //                 formattedResponse.push(customElement);
+    //             } else if(/^\s+- \*\*/.test(line) || /^\s+\* \*\*/.test(line)) {
+    //                 const hypenStarLine = line.replace(/^\s+[*-]/g, '').split('**');
+    //                 const customElement = document.createElement('div');
+    //                 customElement.style.padding = '6px 0px 6px 30px';
+    //                 customElement.innerHTML = `<li key=${index}><strong>${escapeHTML(hypenStarLine[1])}</strong>&nbsp;<small>${escapeHTML(hypenStarLine[2])}</li>`;
+    //                 formattedResponse.push(customElement);
+    //             }
+    //             // else if(/^\d+\.\s+\*\*(.*?)\*\*/.test(line)) {
+    //             //     console.warn(line, "lines...")
+    //             // }
+    //             else if (line.startsWith("- ") || line.startsWith("* ")) {
+    //                 const customElement = document.createElement('div');
+    //                 customElement.innerHTML = `<li key=${index} >${line.substring(2)}</li>`;
+    //                 formattedResponse.push(customElement);
+    //             } else if (spaceStarCheck.test(line) || spaceHypenCheck.test(line)) {
+    //                 const customElement = document.createElement('div');
+    //                 customElement.innerHTML = `<li key=${index}>${line.replace(/^[-*]/, '')}</li>`;
+    //                 formattedResponse.push(customElement);
+    //             } else if (line.length === 0) {
+    //                 const emptyDiv = document.createElement('div');
+    //                 emptyDiv.style.height = '10px';
+    //                 formattedResponse.push(emptyDiv);
+    //             } else {
+    //                 const customElement = document.createElement('div');
+    //                 customElement.innerHTML = `<p key=${index}>&emsp;&emsp;${line}</p>`;
+    //                 formattedResponse.push(customElement);
+    //             }
+    //         }
+    //         if (isCodeLine === 'end' || isCodeLine === 'oneLine')
+    //             isCodeLine = '';
+    //     });
+    //     return formattedResponse;
+    // };
 
     function calculateLines(textarea) {
         const style = window.getComputedStyle(textarea);
@@ -225,14 +237,14 @@ const GeminiApi = () => {
         if (event.key === 'Enter' && !event.shiftKey) {
             const prompt = textareaRef.current.value;
             if (prompt.trim().length > 0) {
-                textareaRef.current.value = '';
+                textareaRef.current.value = null;
                 if (document.getElementById("response_element"))
                     document.getElementById("response_element").innerHTML = '';
                 getResponseFromAI(prompt);
                 setQuestion(prompt);
             }
         }
-        const currentLineCount = textareaRef.current.value.split('\n').length;
+        const currentLineCount = textareaRef.current.value?.split('\n').length;
         const input = textareaRef.current.value
         if (input.length === 0) {
             adjustTextareaHeight(null);
@@ -240,97 +252,110 @@ const GeminiApi = () => {
             adjustTextareaHeight(textareaRef.current.scrollHeight);
         } else if (event.key === 'Backspace') {
             if (currentLineCount < previousLineCount) {
-                adjustTextareaHeight((textareaRef.current.scrollHeight - 22));
+                adjustTextareaHeight(textareaRef.current.scrollHeight >= 72 ? textareaRef.current.scrollHeight : (textareaRef.current.scrollHeight - 22));
             }
             setPreviousLineCount(currentLineCount);
         }
-
-        document.getElementById('prompt_inputs').addEventListener('keyup', function () {
-            const lines = calculateLines(this);
-            adjustTextareaHeight(lines * (lines === 1 ? 36 : 22));
-        });
     };
 
+    const handleOnKeyUp = (event) => {
+        const prompt_inputs = document.getElementById("prompt_inputs");
+        if (event?.key === 'Enter' && !event.shiftKey) {
+            event.target.value = '';
+            event.preventDefault();
+        }
+        const lines = calculateLines(prompt_inputs);
+        adjustTextareaHeight(lines * (lines === 1 ? 72 : 36));
+    }
 
     const adjustTextareaHeight = (scrollHeight) => {
-        setTextareaHeight('2.5rem');
+        setTextareaHeight('4.5rem');
         const prompt_inputs = document.getElementById("prompt_inputs");
         if (scrollHeight) {
             setTextareaHeight(`${scrollHeight}px`);
-            prompt_inputs.style.borderRadius = '15px'
+            prompt_inputs.style.borderRadius = '10px'
         } else {
-            prompt_inputs.style.borderRadius = '40px'
+            prompt_inputs.style.borderRadius = '10px'
         }
     };
 
-     const updateIsCollapsed = (value) => {
-         setIsCollapsed(value);
+     const updateIsSideBarOpen = (value) => {
+         setIsSideBarOpen(value);
      }
 
     return (
         <>
-            {isMobile && isCollapsed &&
+            {isMobile && isSideBarOpen &&
             <div className={'mt-2'} style={{display: 'flex', alignItems: "center", width: '100%'}}>
-                <IconButton onClick={() => updateIsCollapsed(!isCollapsed)}>
+                <IconButton onClick={() => updateIsSideBarOpen(!isSideBarOpen)}>
                     <MenuOutlinedIcon/>
                 </IconButton>&nbsp;&nbsp;
                 <h2 className="title-mobile title" style={{fontSize: '2rem !important'}}>IAmAI</h2>
             </div>}
             <div className="main-container">
-                <div className="title-container" style={isCollapsed ? {width: 0} : {width: '10%'}}>
-                    <SideBarContent
-                        reformatResponse={reformatResponse}
-                        isCollapsed={isCollapsed}
+                <div className="title-container" style={!isSideBarOpen ? {width: 0} : {width: '10%'}}>
+                    <SideBar
+                        textareaRef={textareaRef}
+                        setLoading={setLoading}
+                        isSideBarOpen={isSideBarOpen}
                         setResponse={setResponse}
                         setQuestion={setQuestion}
                         setHistoryList={setHistoryList}
                         historyList={historyList}
-                        updateIsCollapsed={updateIsCollapsed}>
-                    </SideBarContent>
-                    {!isMobile && isCollapsed && <> &nbsp;&nbsp;&nbsp;&nbsp;
-                    <h2 style={{fontSize: 'xx-large'}} className="title" >IAmAI</h2></>}
+                        updateIsSideBarOpen={updateIsSideBarOpen}>
+                    </SideBar>
                 </div>
-                <div className="parent-container" style={isCollapsed ? {width: '100%'} : {width: '90%'}}>
+                <div className="parent-container bg-[rgba(246,247,248,0.5)] dark:bg-[rgba(52,52,52)]" style={!isSideBarOpen ? {width: '100%'} : {width: '90%'}}>
+                    {!isMobile && !isSideBarOpen && <>
+                        <img src={iamaiLogo} alt="IAmAI"
+                             className={'w-[150px] h-[40px] x-[999] absolute top-[10px] left-[60px]'}/>
+                    </>}
                     {response ?
-                        <div id="res" className="response_container shadow rounded-2">
-                            <div className="question_header">{question}</div>
-                            {question.length > 0 && <div className="horizontal-line"></div>}
-                            <div>
-                                {loading && <LoaderActive/>}
-                                <div id="response_element"></div>
+                        <div className={`h-[75%] ${isMobile ? 'w-[99%]' :'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
+                            <div className={'px-2 py-1 dark:text-white bg-[lavender] dark:bg-[#757575f7] w-fit rounded-t-md mb-2 ' +
+                                'whitespace-pre-wrap max-w-[100%] max-h-[60%] min-w-[10%] overflow-y-auto'} >
+                                {question}
+                            </div>
+                            <hr className={'dark:text-sky-100 text-[#757575f7]'}/>
+                            {loading && <LoaderActive/>}
+                            <div id="response_element" className={"dark:text-white"}>
+                                <div dangerouslySetInnerHTML={responseFormateRef.current}></div>
                             </div>
                         </div>
                         :
-                        <div style={{position: 'relative', bottom: '100px'}} className={'user-select-none'} >
-                            <img className="robot-image" src={robot} style={{height: '22rem'}}
+                        <div style={{position: 'relative', bottom: '40px'}} className={'user-select-none'}>
+                            <img className="robot-image user-select-none" src={robot} style={{height: '22rem'}}
                                  alt={"loading...."}/>
                         </div>}
-                    <div className={'flex'}>
+                    <div className={'flex dark:text-white'}>
                         {isServerMsgVisible &&
                             (!isServerActive ?
-                            <>
-                                <CircularProgress style={{width: '20px', height: '20px'}} color="inherit"/>
-                                <pre className={'px-2'}>server starting, please wait...</pre>
-                            </> :
-                            <> <TaskAlt style={{width: '20px', height: '20px'}} color={'success'}/>
-                                <pre>server started.</pre>
-                            </>)
+                                <>
+                                    <CircularProgress style={{width: '20px', height: '20px'}} color="inherit"/>
+                                    <pre className={'px-2'}>server starting, please wait...</pre>
+                                </> :
+                                <> <TaskAlt style={{width: '20px', height: '20px'}} color={'success'}/>
+                                    <pre>server started.</pre>
+                                </>)
                         }
                     </div>
                     <div className="input-portion">
-                        <div className="textarea-wrapper">
-                    <textarea
-                        ref={textareaRef}
-                        style={{height: textareaHeight, maxHeight: '190px'}}
-                        id="prompt_inputs"
-                        onKeyUp={handleKeyDown}
-                        onKeyDown={handleKeyDown}
-                        disabled={!isServerActive}
-                        placeholder="Ask what you want to know!"
-                    />
+                       <div className="textarea-wrapper">
+                            <textarea
+                                ref={textareaRef}
+                                className={'dark:text-white'}
+                                style={{height: textareaHeight, maxHeight: '190px'}}
+                                id="prompt_inputs"
+                                onKeyUp={handleOnKeyUp}
+                                onKeyDown={handleKeyDown}
+                                spellCheck={false}
+                                disabled={!isServerActive}
+                                placeholder="Ask what you want to know!"
+                            />
                             <button
                                 className="sent_button"
                                 disabled={!isServerActive}
+                                title={"Send"}
                                 onClick={() => {
                                     const prompt = document.getElementById("prompt_inputs").value;
                                     if (prompt.length > 0) {
@@ -339,13 +364,12 @@ const GeminiApi = () => {
                                         setQuestion(prompt);
                                     }
                                 }}
-                                // onKeyUp={handleKeyDown}
                             >
-                                <FontAwesomeIcon icon={faPaperPlane} color="green" fontSize={isMobile ? 33 : 20}/>
+                                <SendIcon style={{width: "35px", height: "35px"}} className={'text-[#174AE4] dark:text-[#67e8f9]'}/>
                             </button>
-                        </div>
+                       </div>
                     </div>
-                  <UserProfile state={state} setState={setState}/>
+                    <UserProfile state={state} setState={setState}/>
                 </div>
             </div>
         </>
