@@ -8,6 +8,7 @@ const userDataSchema = new mongoose.Schema({
     },
     prompt: String,
     response: String,
+    image:String
 })
 
 const UserData = mongoose.model('UserData', userDataSchema);

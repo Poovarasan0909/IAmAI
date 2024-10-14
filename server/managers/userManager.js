@@ -1,5 +1,6 @@
 const User = require('../models/usersModel');
 const UserData = require('../models/userDataModel');
+const UserGeolocation = require('../models/userGeolocation');
 const mongoose = require('mongoose');
 
 async function createUser(body) {
@@ -17,17 +18,14 @@ async function createUser(body) {
     }
 }
 
-async function createUserData(body) {
+async function createUserData(body, imageBase64) {
       try {
-          const user = await User.findById(body.userId).populate('userdatas');
           const userId = new mongoose.Types.ObjectId(body.userId);
-          const user1 = await User.findById(userId);
-          console.log(user);
-          console.log(user1);
           const userData = new UserData({
               userId: userId,
               prompt: body.prompt,
-              response: body.response
+              response: body.response,
+              image: imageBase64
           })
           await userData.save();
 
@@ -40,7 +38,7 @@ async function createUserData(body) {
       }
 }
 async function deleteUserDataById(userDataId) {
-   try{
+   try {
       const result = await UserData.findByIdAndDelete(userDataId);
       if(result) {
           console.log(`UserData with ID ${userDataId} deleted successfully.`);
@@ -87,9 +85,39 @@ async function getUserDataByUserId(id) {
     const userData = await UserData.find({userId: userId});
     return userData
 }
+
+async function storeIpData(body) {
+    try {
+        const userId = body.userId ? new mongoose.Types.ObjectId(body.userId) : null
+        const value = await UserGeolocation.findOne({userId: userId});
+
+        if(userId && value) {
+            await UserGeolocation.findOneAndUpdate({userId: userId}, {
+                $set:{
+                    createdAt: new Date(),
+                    geolocation: body.geolocation,
+                    userId: userId
+                }
+            }, {
+                new: true,
+                upsert: true
+            })
+        } else {
+            const userGeoLocation = new UserGeolocation({
+                geolocation: body.geolocation,
+                userId: userId
+            })
+            await userGeoLocation.save();
+        }
+
+    } catch (e) {
+        console.error("!Error while Geolocation Storing", e)
+    }
+}
 module.exports = {createUser,
                   createUserData,
                   deleteUserById,
                   deleteUserDataById,
                    getUserDataByUserId,
-                  checkIsUserExit};
+                  checkIsUserExit,
+                  storeIpData};

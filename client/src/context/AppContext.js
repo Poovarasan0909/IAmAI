@@ -8,6 +8,7 @@ export const AppProvider = ({ children }) => {
     const [isServerActive, setIsServerActive] = useState(false);
     const [isServerMsgVisible, setIsServerMsgVisible] = useState(true);
     const [themeMode, setThemeMode] = useState(themeFromLocalStore ? themeFromLocalStore : 'light');
+    const [geolocation, setGeolocation] = useState('');
 
     useEffect(() => {
         if(isServerActive) {
@@ -18,7 +19,13 @@ export const AppProvider = ({ children }) => {
     }, [isServerActive]);
 
     return (
-        <AppContext.Provider value={{isServerActive, setIsServerActive, isServerMsgVisible, themeMode, setThemeMode}}>
+        <AppContext.Provider value={{isServerActive,
+                                     setIsServerActive,
+                                     isServerMsgVisible,
+                                     themeMode,
+                                     setThemeMode,
+                                     geolocation,
+                                     setGeolocation}}>
             {children}
         </AppContext.Provider>
     );

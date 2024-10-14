@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import useIsMobile from "../hooks/useIsMobile";
 import {UserContext} from "../context/UserContext";
-import {getRequest} from "../API_helper/APIs";
+import {deleteRequest, getRequest} from "../API_helper/APIs";
 import {useNavigate} from "react-router-dom";
 import Drawer from "@mui/material/Drawer";
 import {useTheme} from "@mui/material/styles";
@@ -20,7 +20,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import MenuIcon from "@mui/icons-material/Menu";
 import iamaiLogo from "../css/IAMAI-19-09-2024.png"
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faPlus} from "@fortawesome/free-solid-svg-icons";
+import {faPlus, faXmark} from "@fortawesome/free-solid-svg-icons";
 import {AppContext} from "../context/AppContext";
 import {markedResponse} from "./markedResponse";
 
@@ -34,7 +34,7 @@ const DrawerHeader = styled("div")(({theme}) => ({
 }));
 const SideBar = ({
                      isSideBarOpen, updateIsSideBarOpen, setResponse, setLoading,
-                     setQuestion, historyList, setHistoryList, textareaRef
+                     setQuestion, historyList, setHistoryList, textareaRef, setQuestionImg
                  }) => {
     const {state} = useContext(UserContext);
     const navigate = useNavigate();
@@ -43,19 +43,25 @@ const SideBar = ({
 
     useEffect(() => {
         const userId = state.user?._id;
+         getUserDataByUserId(userId);
+    }, [state]);
+
+    const getUserDataByUserId = (userId) => {
         if (userId) {
             getRequest(`getUserDataById/${userId}`).then((res) => {
                 setHistoryList(res.data?.reverse());
             })
         }
-    }, [state]);
+    }
 
-    const handleOnHistoryResponse = (response, prompt) => {
+    const handleOnHistoryResponse = (response, prompt, image) => {
+        setQuestionImg(null);
         if (document.getElementById("response_element"))
             document.getElementById("response_element").innerHTML = '';
         setResponse(true);
         setLoading(false);
         setQuestion(prompt);
+        setQuestionImg(image);
         markedResponse(response);
         if (isMobile)
             updateIsSideBarOpen(!isSideBarOpen);
@@ -130,11 +136,20 @@ const SideBar = ({
                             <div className={'px-2 pt-3 dark:text-white'}><b>History</b></div>
                             <List className={'dark:text-white '} sx={{overflowX: 'auto', maxHeight: '72vh'}}>
                                 {historyList && historyList.map((his) => (
-                                    <ListItem key={his} className={'truncate'} disablePadding>
-                                        <ListItemButton style={{padding: '0 10px 0 10px'}}
-                                                        onClick={() => handleOnHistoryResponse(his.response, his.prompt)}>
+                                    <ListItem key={his} className={`${!isMobile ?'sidebar-list-item': ''} truncate`} disablePadding>
+                                        <ListItemButton className={'truncate'}
+                                                        style={{padding: '0 10px 0 10px'}}
+                                                        onClick={() => handleOnHistoryResponse(his.response, his.prompt, his.image)}>
                                             <ListItemText primary={makeFirstLetterCaps(his.prompt)}/>
+
                                         </ListItemButton>
+                                        <div className={'icon-container p-[2px] bg-gray-200 cursor-pointer'}>
+                                            <FontAwesomeIcon icon={faXmark} className={'text-red-500'}
+                                                             onClick={() => {
+                                                                 setHistoryList(historyList.filter((val) => his._id !== val._id))
+                                                                 deleteRequest(`deleteUserData/${his._id}`)
+                                                                 .then(() => getUserDataByUserId(state.user?._id))}}/>
+                                        </div>
                                     </ListItem>
                                 ))}
                             </List>

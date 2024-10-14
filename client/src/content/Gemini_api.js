@@ -1,49 +1,100 @@
 import React, {useContext, useRef, useState} from "react";
-import LoaderActive from '../loader/LoaderActive';
 import robot from '../css/webp/ro.webp';
 import useIsMobile from "../hooks/useIsMobile";
-import {CircularProgress, IconButton, Paper} from "@mui/material";
+import {CircularProgress, IconButton} from "@mui/material";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import {UserContext} from "../context/UserContext";
 import UserProfile from "./UserProfile";
-import {postRequest} from "../API_helper/APIs";
+import {multipartPostRequest} from "../API_helper/APIs";
 import TaskAlt from '@mui/icons-material/TaskAlt';
 import {AppContext} from "../context/AppContext";
 import SideBar from "./SideBar";
 import iamaiLogo from "../css/IAMAI-19-09-2024.png";
 import SendIcon from '@mui/icons-material/Send';
 import {markedResponse} from "./markedResponse";
+import spinner from "../css/spinner.svg"
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faImage, faXmark} from "@fortawesome/free-solid-svg-icons";
+import ImageDialog from "../common/ImageDialog";
+
 
 const GeminiApi = () => {
+    const textareaRef = useRef(null);
+    const imageInputRef = useRef(null);
 
     const [response, setResponse] = useState(false);
     const [question, setQuestion] = useState('');
     const [loading, setLoading] = useState(false);
     const [isSideBarOpen, setIsSideBarOpen] = useState(false);
     const [textareaHeight, setTextareaHeight] = useState('4.5rem');
-    const textareaRef = useRef(null);
     const [previousLineCount, setPreviousLineCount] = useState(1);
     const isMobile = useIsMobile();
     const [historyList, setHistoryList] = useState([]);
+    const [responseStatus, setResponseStatus] = useState('Loading...');
+    const [file, setFile] = useState(null);
+    const [questionImg, setQuestionImg] = useState(null);
+    const [imageInDialog, setImageInDialog] = useState(null);
+
 
     const { state, setState } = useContext(UserContext);
     const {isServerActive, isServerMsgVisible} = useContext(AppContext);
     const responseFormateRef = useRef(null);
 
     const fetchResponse = async (prompt) => {
-        return postRequest('/geminiAI-data', {
-            prompt: prompt
-        });
+        const formData = new FormData();
+        formData.append('prompt', prompt);
+        if(file) {
+            formData.append('image', file);
+        }
+        try {
+         const response = multipartPostRequest('/geminiAI-data', formData)
+         return response;
+        } catch (error) {
+           console.error(error)
+        }
+    }
+    // const fetchResponse = async (prompt) => {
+    //     const baseUrl = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.29.57:4000' :  packageJson.baseURL;
+    //     return new Promise((resolve, reject) => {
+    //         const eventSource = new EventSource(`${baseUrl}/geminiAI-data?prompt=${encodeURIComponent(prompt)}`)
+    //         eventSource.onmessage = (event) => {
+    //             try {
+    //                 const data = JSON.parse(event.data);
+    //                 if (data.res) {
+    //                     eventSource.close();
+    //                     resolve({res: data.res});
+    //                 } else if (data.error) {
+    //                     eventSource.close();
+    //                     reject(new Error(data.error))
+    //                 } else {
+    //                     setResponseStatus(data.status)
+    //                 }
+    //             } catch (e) {
+    //                 reject(e)
+    //             }
+    //         };
+    //         eventSource.onerror = () => {
+    //             console.log("Error occurred while fetching data", "onerror");
+    //             eventSource.close();
+    //         };
+    //
+    //     });
+    // }
+
+
+    const storeSearchHistory = (response, prompt, img) => {
+        const formData = new FormData();
+        formData.append('userId', state.user._id);
+        formData.append('prompt', prompt);
+        formData.append('response', response)
+        if(img) {
+            formData.append('image', img);
+        }
+        multipartPostRequest('/createUserData', formData)
+            .then((res) => setHistoryList([{prompt: prompt, response: response, image: res.data.image}, ...historyList]))
+
     }
 
-    const storeSearchHistory = (response, prompt) => {
-        postRequest('createUserData', {
-            userId: state.user._id,
-            prompt: prompt,
-            response: response
-        })
-        setHistoryList([{prompt: prompt, response: response}, ...historyList])
-    }
     const escapeHTML = (str) => {
         return str.replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
@@ -67,11 +118,12 @@ const GeminiApi = () => {
         let testRes = null;
         const run = async () => {
             try {
+                setQuestionImg(file);
                 const {data} = await fetchResponse(inst);
-                return {response: data.res, prompt: prompt};
+                return {response: data.res, prompt: prompt, img: file};
             } catch (err) {
                 console.error(err);
-                return {response: '!ERROR  : Something Went Wrong', prompt: prompt};
+                return {errorResponse: '!ERROR  : Something Went Wrong', prompt: prompt};
             }
 
             /* Testing response code */
@@ -86,115 +138,17 @@ const GeminiApi = () => {
         run().then(res => {
             if (document.getElementById("response_element"))
                 document.getElementById("response_element").innerHTML = '';
-            markedResponse(res.response);
+            setFile(null);
+            if(res.response) {
+                markedResponse(res.response);
+            } else if(res.errorResponse) {
+                markedResponse(`<h6 class="text-red-600 italic">${res.errorResponse}</h6>`)
+            }
             setLoading(false);
             if(state.user)
-               storeSearchHistory(res.response, res.prompt);
+               storeSearchHistory(res.response, res.prompt, res.img);
         });
     };
-
-    // const reformatResponse = (text) => {
-    //     const lines = text?.split('\n');
-    //     const formattedResponse = [];
-    //     const spaceStarCheck = /^\s*\*/gm;
-    //     const spaceHypenCheck = /^\s*-/gm;
-    //
-    //     let isCodeFirstLine = false;
-    //     let isCodeLine = '';
-    //     let codeContainer = document.createElement('div');
-    //     codeContainer.className = "code_block";
-    //     lines.forEach((line, index) => {
-    //         const codeElement = document.createElement('code');
-    //         const preElement = document.createElement('pre');
-    //         const language = codeLanguageName;
-    //         preElement.key = `code-block-${index}`
-    //         line = line.replace(/^s+/, '');
-    //         if (line.startsWith("```") || line.endsWith("```")) {
-    //             const completeCodeLine = /```([\s\S]*?)```/g;
-    //             if (completeCodeLine.test(line)) {
-    //                 codeElement.className = `language-${language}`
-    //                 codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
-    //                 preElement.appendChild(codeElement);
-    //                 codeContainer.appendChild(preElement);
-    //                 formattedResponse.push(codeContainer);
-    //                 codeContainer = document.createElement('div');
-    //                 codeContainer.className = "code_block";
-    //                 isCodeLine = 'oneLine';
-    //             } else {
-    //                 if (isCodeLine === '') {
-    //                     codeElement.className = `language-${language}`
-    //                     codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
-    //
-    //                     setCodeLanguageName(line.replace(/```/g, ""));
-    //                     preElement.appendChild(codeElement);
-    //                     preElement.className = 'name-of-language border-b border-white-500'
-    //                     codeContainer.appendChild(preElement);
-    //                     isCodeLine = 'start';
-    //                     isCodeFirstLine = true;
-    //                 } else if (isCodeLine === 'start') {
-    //                     codeElement.className = `language-${language}`;
-    //                     codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
-    //                     preElement.appendChild(codeElement);
-    //                     codeContainer.appendChild(preElement);
-    //                     formattedResponse.push(codeContainer);
-    //                     codeContainer = document.createElement('div');
-    //                     codeContainer.className = "code_block";
-    //                     isCodeLine = 'end';
-    //                 }
-    //             }
-    //         } else isCodeFirstLine = false;
-    //
-    //         if (isCodeLine === 'start' && !isCodeFirstLine) {
-    //             codeElement.className = `language-${language}`
-    //             codeElement.innerHTML = Prism.highlight(line.replace(/```/g, ""), Prism.languages[language] || Prism.languages.javascript, language);
-    //             preElement.appendChild(codeElement);
-    //             codeContainer.appendChild(preElement);
-    //         }
-    //         console.log(line, " __outside...",)
-    //         if ([''].includes(isCodeLine)) {
-    //             if (line.startsWith("**")) {
-    //                 const customElement = document.createElement('div');
-    //                 customElement.innerHTML = `<strong class='dark:text-blue-400 text-zinc-900'>${line.replace(/\*\*/g, '')}</strong>`;
-    //                 formattedResponse.push(customElement);
-    //             } else if (line.startsWith("- **") || line.startsWith("* **")) {
-    //                 // console.error(line , "_inside..");
-    //                 const starLine = line.replace(/^[*-]/g, '').split('**');
-    //                 const customElement = document.createElement('div');
-    //                 customElement.innerHTML = `<li key=${index}><strong>${escapeHTML(starLine[1])}</strong>&nbsp;<small>${escapeHTML(starLine[2])}</small></li>`;
-    //                 formattedResponse.push(customElement);
-    //             } else if(/^\s+- \*\*/.test(line) || /^\s+\* \*\*/.test(line)) {
-    //                 const hypenStarLine = line.replace(/^\s+[*-]/g, '').split('**');
-    //                 const customElement = document.createElement('div');
-    //                 customElement.style.padding = '6px 0px 6px 30px';
-    //                 customElement.innerHTML = `<li key=${index}><strong>${escapeHTML(hypenStarLine[1])}</strong>&nbsp;<small>${escapeHTML(hypenStarLine[2])}</li>`;
-    //                 formattedResponse.push(customElement);
-    //             }
-    //             // else if(/^\d+\.\s+\*\*(.*?)\*\*/.test(line)) {
-    //             //     console.warn(line, "lines...")
-    //             // }
-    //             else if (line.startsWith("- ") || line.startsWith("* ")) {
-    //                 const customElement = document.createElement('div');
-    //                 customElement.innerHTML = `<li key=${index} >${line.substring(2)}</li>`;
-    //                 formattedResponse.push(customElement);
-    //             } else if (spaceStarCheck.test(line) || spaceHypenCheck.test(line)) {
-    //                 const customElement = document.createElement('div');
-    //                 customElement.innerHTML = `<li key=${index}>${line.replace(/^[-*]/, '')}</li>`;
-    //                 formattedResponse.push(customElement);
-    //             } else if (line.length === 0) {
-    //                 const emptyDiv = document.createElement('div');
-    //                 emptyDiv.style.height = '10px';
-    //                 formattedResponse.push(emptyDiv);
-    //             } else {
-    //                 const customElement = document.createElement('div');
-    //                 customElement.innerHTML = `<p key=${index}>&emsp;&emsp;${line}</p>`;
-    //                 formattedResponse.push(customElement);
-    //             }
-    //         }
-    //         if (isCodeLine === 'end' || isCodeLine === 'oneLine')
-    //             isCodeLine = '';
-    //     });
-    //     return formattedResponse;
-    // };
 
     function calculateLines(textarea) {
         const style = window.getComputedStyle(textarea);
@@ -236,7 +190,7 @@ const GeminiApi = () => {
         }
         if (event.key === 'Enter' && !event.shiftKey) {
             const prompt = textareaRef.current.value;
-            if (prompt.trim().length > 0) {
+            if (prompt.trim().length > 0 || file) {
                 textareaRef.current.value = null;
                 if (document.getElementById("response_element"))
                     document.getElementById("response_element").innerHTML = '';
@@ -283,6 +237,33 @@ const GeminiApi = () => {
          setIsSideBarOpen(value);
      }
 
+     const handleOnInputImageClick = () => {
+         imageInputRef.current.click();
+     }
+
+    const handleOnPast = (event) => {
+        const items = event.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if(item.type.startsWith('image/')) {
+                event.preventDefault();
+                const file = item.getAsFile();
+                setFile(file);
+            }
+        }
+    }
+
+    const handleOnDrag = (event) => {
+        const items = event.dataTransfer.items;
+        for(let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if(item.type.startsWith('image/')) {
+                event.preventDefault();
+                const file = item.getAsFile();
+                setFile(file);
+            }
+        }
+    }
     return (
         <>
             {isMobile && isSideBarOpen &&
@@ -292,6 +273,7 @@ const GeminiApi = () => {
                 </IconButton>&nbsp;&nbsp;
                 <h2 className="title-mobile title" style={{fontSize: '2rem !important'}}>IAmAI</h2>
             </div>}
+            <ImageDialog imageInDialog={imageInDialog} setImageInDialog={setImageInDialog}/>
             <div className="main-container">
                 <div className="title-container" style={!isSideBarOpen ? {width: 0} : {width: '10%'}}>
                     <SideBar
@@ -302,22 +284,35 @@ const GeminiApi = () => {
                         setQuestion={setQuestion}
                         setHistoryList={setHistoryList}
                         historyList={historyList}
+                        setQuestionImg={setQuestionImg}
                         updateIsSideBarOpen={updateIsSideBarOpen}>
                     </SideBar>
                 </div>
-                <div className="parent-container bg-[rgba(246,247,248,0.5)] dark:bg-[rgba(52,52,52)]" style={!isSideBarOpen ? {width: '100%'} : {width: '90%'}}>
+                <div className="parent-container bg-[rgba(246,247,248,0.5)] dark:bg-[rgba(52,52,52)]"
+                     style={!isSideBarOpen ? {width: '100%'} : {width: '90%'}}>
                     {!isMobile && !isSideBarOpen && <>
                         <img src={iamaiLogo} alt="IAmAI"
                              className={'w-[150px] h-[40px] x-[999] absolute top-[10px] left-[60px]'}/>
                     </>}
                     {response ?
-                        <div className={`h-[75%] ${isMobile ? 'w-[99%]' :'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
-                            <div className={'px-2 py-1 dark:text-white bg-[lavender] dark:bg-[#757575f7] w-fit rounded-t-md mb-2 ' +
-                                'whitespace-pre-wrap max-w-[100%] max-h-[60%] min-w-[10%] overflow-y-auto'} >
+                        <div className={`h-[75%] ${isMobile ? 'w-[99%]' : 'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
+                            <div
+                                className={`px-2 ${question.length > 0 && 'py-1'} dark:text-white bg-[lavender] dark:bg-[#757575f7] w-fit rounded-t-md mb-2 ` +
+                                    'whitespace-pre-wrap max-w-[100%] max-h-[60%] min-w-[10%] overflow-y-auto'}>
                                 {question}
+                                {questionImg &&
+                                <img src={typeof questionImg === 'string' ? `data:image/jpeg;base64, ${questionImg}` : URL.createObjectURL(questionImg)}
+                                     className={'rounded-2xl mt-3 max-h-[14rem]'}
+                                     onClick={() => {
+                                         setImageInDialog(questionImg);
+                                     }} alt={'Prompt Image'}/>}
                             </div>
                             <hr className={'dark:text-sky-100 text-[#757575f7]'}/>
-                            {loading && <LoaderActive/>}
+                            {loading &&
+                                <div className={'flex justify-center items-center h-[50vh]'}>
+                                    <img alt={"Loading..."} style={{width: '10%'}} src={spinner}/>
+                                    <span className={'dark:text-white'}>{responseStatus}</span>
+                                </div>}
                             <div id="response_element" className={"dark:text-white"}>
                                 <div dangerouslySetInnerHTML={responseFormateRef.current}></div>
                             </div>
@@ -325,7 +320,7 @@ const GeminiApi = () => {
                         :
                         <div style={{position: 'relative', bottom: '40px'}} className={'user-select-none'}>
                             <img className="robot-image user-select-none" src={robot} style={{height: '22rem'}}
-                                 alt={"loading...."}/>
+                                 alt={"IAMAI"}/>
                         </div>}
                     <div className={'flex dark:text-white'}>
                         {isServerMsgVisible &&
@@ -339,8 +334,23 @@ const GeminiApi = () => {
                                 </>)
                         }
                     </div>
+                    <input type="file"
+                           ref={imageInputRef}
+                           accept={"image/*"}
+                           className={'hidden'}
+                           onChange={(e) => setFile(e.target.files[0])}/>
+
                     <div className="input-portion">
-                       <div className="textarea-wrapper">
+                        {file && <div className={'image-inside-input'}>
+                            <div className={'inline-flex'}>
+                                <img className={'ring-2 ring-blue-500 hover:border-2 cursor-pointer rounded'} width={"60px"}
+                                     height={"60px"} src={URL.createObjectURL(file)}
+                                     alt={"Image"} onClick={() => setImageInDialog(file)}/>
+                                <div className={'flex px-[4px] cancel-img-input '} onClick={() => setFile(null)}>
+                                    <FontAwesomeIcon className={'cursor-pointer dark:text-white rounded-4 border-2 border-slate-900'} icon={faXmark}/></div>
+                            </div>
+                        </div>}
+                        <div className="textarea-wrapper">
                             <textarea
                                 ref={textareaRef}
                                 className={'dark:text-white'}
@@ -351,6 +361,8 @@ const GeminiApi = () => {
                                 spellCheck={false}
                                 disabled={!isServerActive}
                                 placeholder="Ask what you want to know!"
+                                onPaste={(e)=> handleOnPast(e) }
+                                onDrop={(e)=> handleOnDrag(e)}
                             />
                             <button
                                 className="sent_button"
@@ -358,16 +370,21 @@ const GeminiApi = () => {
                                 title={"Send"}
                                 onClick={() => {
                                     const prompt = document.getElementById("prompt_inputs").value;
-                                    if (prompt.length > 0) {
+                                    if (prompt.length > 0 || file) {
                                         getResponseFromAI(prompt);
                                         document.getElementById("prompt_inputs").value = '';
                                         setQuestion(prompt);
                                     }
                                 }}
                             >
-                                <SendIcon style={{width: "35px", height: "35px"}} className={'text-[#174AE4] dark:text-[#67e8f9]'}/>
+                                <SendIcon style={{width: "35px", height: "35px"}}
+                                          className={'text-[#174AE4] dark:text-[#67e8f9]'}/>
                             </button>
-                       </div>
+                            <FontAwesomeIcon className={'absolute left-2 bottom-3 dark:text-white cursor-pointer'}
+                                             icon={faImage}
+                                             onClick={() => handleOnInputImageClick()}
+                            />
+                        </div>
                     </div>
                     <UserProfile state={state} setState={setState}/>
                 </div>

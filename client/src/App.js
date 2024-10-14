@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import './App.css';
 import Gemini_api from './content/Gemini_api'
 import './css/background.css'
@@ -6,14 +6,17 @@ import './css/contentPage.css'
 import { Helmet } from 'react-helmet';
 import {BrowserRouter as Router, Navigate, Route, Routes} from 'react-router-dom';
 import SignUpAndSignIn from "./authenticationPages/SignUpAndSignIn";
-import {getRequest} from "./API_helper/APIs";
+import {getRequest, postRequest} from "./API_helper/APIs";
 import {AppContext} from "./context/AppContext";
 // Importing CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import axios from "axios";
+import {UserContext} from "./context/UserContext";
 
 function App() {
-    let {isServerActive, setIsServerActive} = useContext(AppContext);
+    let {isServerActive, setIsServerActive, setGeolocation} = useContext(AppContext);
+    let {state} = useContext(UserContext)
 
     useEffect( () =>  {
         async function checkIsServerActive() {
@@ -29,6 +32,24 @@ function App() {
         }
        checkIsServerActive();
     }, []);
+
+    useEffect( () => {
+        setTimeout(() => {
+            axios('https://api.ipify.org?format=json').then((res) => {
+                axios.get(`https://ipinfo.io/${res.data.ip}/json?token=398c229072b4b7`).then((add) => {
+                    setGeolocation(add.data);
+                    let params = {
+                        userId: state.user ? state.user._id : null,
+                        geolocation:add.data
+                    }
+                    if(!localStorage.getItem('isLoaded')) {
+                        postRequest('/saveGeolocation', params)
+                    }
+                    localStorage.setItem('isLoaded', true);
+                }).catch((e) => console.error(e))
+            }).catch((e) => console.error(e))
+        }, 2000);
+    },[isServerActive])
 
     return (
       <div className={"container"}>

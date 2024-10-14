@@ -74,7 +74,6 @@ p {
 
 .input-portion {
     width: 60%;
-    display: flex;
     justify-content: center;
     align-items: flex-start;
     margin-top: 10px;
@@ -90,7 +89,7 @@ p {
     background-color: rgb(234, 234, 234);
     border-radius: 10px;
     font-size: medium;
-    padding-left: 20px;
+    padding-left: 30px;
     padding-right: 40px;
     padding-top: 10px;
     font-family: "Lucida Console", "Courier New", monospace;
@@ -277,4 +276,37 @@ p {
 }
 .response_element li {
     list-style-type: disc !important;
+}
+
+.sidebar-list-item:hover .icon-container {
+    display: inline-block;
+    animation-name: sidebar-list-hover;
+    animation-duration: 0.2s;
+}
+.sidebar-list-item .icon-container {
+    display: none;
+}
+
+@keyframes sidebar-list-hover {
+    0% {
+      width: 0;
+    }
+    25% {
+      width: 2px;
+    }
+    50% {
+      width: 5px;
+    }
+    75% {
+      width: 8px;
+    }
+    100% {
+      width: 20px;
+    }
+}
+.image-inside-input:hover .cancel-img-input {
+    display: inline-block;
+}
+.image-inside-input .cancel-img-input {
+    display: none;
 }

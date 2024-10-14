@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Test = require('../models/testModels');
 const users = require('../models/usersModel');
-const {createUser, createUserData, deleteUserDataById, deleteUserById, checkIsUserExit, getUserDataByUserId} = require('../managers/userManager');
+const {createUser, createUserData, deleteUserDataById, deleteUserById, checkIsUserExit, getUserDataByUserId, storeIpData} = require('../managers/userManager');
+const multer = require("multer");
+const fs = require("fs");
 
 router.get('/createModule', async (req, res) => {
     try{
@@ -23,14 +25,21 @@ router.post('/createUser', async (req, res) => {
     }
 })
 
-router.post('/createUserData', async (req, res) => {
-    try{
-      await createUserData(req.body).then(() => {
-          console.log("response After createUserData")
-      });
-      res.status(200).json(req.body);
-    } catch (error){
-      res.status(400).send('Error while creating user data '+ error.message);
+const upload = multer({ dest: 'uploads/'});
+
+router.post('/createUserData', upload.single('image'), async (req, res) => {
+    let imageBase64 = null;
+    if(req.file) {
+        const imageBuffer = fs.readFileSync(req.file.path);
+        imageBase64 = imageBuffer.toString('base64');
+    }
+    try {
+      await createUserData(req.body, imageBase64).then(() => {
+        console.log("response After createUserData");
+      })
+        res.status(200).json({body: req.body, image: imageBase64});
+    } catch (error) {
+        res.status(400).send('Error while creating user data '+ error.message);
     }
 })
 
@@ -65,6 +74,14 @@ router.get('/getUserDataById/:id', async (req, res) => {
         res.status(200).send(await getUserDataByUserId(req.params.id))
     } catch(error) {
         res.status(400).send('Error : '+ error.message)
+    }
+})
+
+router.post('/saveGeolocation', async (req, res) => {
+    try{
+        storeIpData(req.body);
+    } catch(error) {
+      console.error(error.message);
     }
 })
 module.exports = router;
