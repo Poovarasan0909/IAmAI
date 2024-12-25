@@ -23,6 +23,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPlus, faXmark} from "@fortawesome/free-solid-svg-icons";
 import {AppContext} from "../context/AppContext";
 import {markedResponse} from "./markedResponse";
+import axios from "axios";
 
 const DrawerHeader = styled("div")(({theme}) => ({
     display: "flex",
@@ -33,8 +34,9 @@ const DrawerHeader = styled("div")(({theme}) => ({
     justifyContent: "flex-end",
 }));
 const SideBar = ({
-                     isSideBarOpen, updateIsSideBarOpen, setResponse, setLoading,
-                     setQuestion, historyList, setHistoryList, textareaRef, setQuestionImg
+                     isSideBarOpen, updateIsSideBarOpen, setResponse, setLoading, setQuestion, setConversations,
+                     historyList, setHistoryList, textareaRef, setQuestionImg, setSelectedHistory, selectedHistory
+
                  }) => {
     const {state} = useContext(UserContext);
     const navigate = useNavigate();
@@ -49,22 +51,55 @@ const SideBar = ({
     const getUserDataByUserId = (userId) => {
         if (userId) {
             getRequest(`getUserDataById/${userId}`).then((res) => {
-                setHistoryList(res.data?.reverse());
+                setHistoryList(res.data);
             })
         }
     }
 
-    const handleOnHistoryResponse = (response, prompt, image) => {
+    const handleOnHistoryResponse = (his) => {
         setQuestionImg(null);
-        if (document.getElementById("response_element"))
-            document.getElementById("response_element").innerHTML = '';
         setResponse(true);
         setLoading(false);
-        setQuestion(prompt);
-        setQuestionImg(image);
-        markedResponse(response);
+        // setQuestion(prompt);
+        // setQuestionImg(image);
+        // const selectedHistory =
+        // markedResponse(response);
+        setSelectedHistory({id : his._id});
+        selectedHistory = {id : his._id}
+        console.log(selectedHistory, "his,..", his.chatHistory);
+        convertImageLinkToImageString(his.chatHistory, (chatHistory) => {
+            setConversations(chatHistory)
+        })
         if (isMobile)
             updateIsSideBarOpen(!isSideBarOpen);
+    }
+
+    const imageLinkToBase64 = async (imageUrl) => {
+        try {
+            const response = await axios.get(imageUrl, {responseType: 'arraybuffer'});
+            const binary = new Uint8Array(response.data).reduce(
+                (data, byte) => data + String.fromCharCode(byte),
+                '');
+            const base64Image = btoa(binary);
+            return `data:${response.headers['content-type']};base64,${base64Image}`;
+        } catch (error) {
+            console.error(`Error fetching image: ${error}`);
+            return null;
+        }
+    }
+
+    const convertImageLinkToImageString = async (chatHistory, callback) => {
+        try {
+            for (const chat of chatHistory) {
+                if (chat.role === 'user' && chat.parts?.image) {
+                    const imageData = await imageLinkToBase64(chat.parts.image); // Await here
+                    chat.parts.image = imageData || null; // Update chat.parts.image directly
+                }
+            }
+            callback(chatHistory);
+        } catch (error) {
+           console.log("Error while converting image link to base64: ", error);
+        }
     }
 
     const makeFirstLetterCaps = (value) => {
@@ -122,6 +157,7 @@ const SideBar = ({
                     <button type="button"
                             onClick={() => {
                                 setResponse(false);
+                                setConversations([]);
                                 if (isMobile)
                                     updateIsSideBarOpen(false);
                                 textareaRef.current.value = "";
@@ -139,8 +175,8 @@ const SideBar = ({
                                     <ListItem key={his} className={`${!isMobile ?'sidebar-list-item': ''} truncate`} disablePadding>
                                         <ListItemButton className={'truncate'}
                                                         style={{padding: '0 10px 0 10px'}}
-                                                        onClick={() => handleOnHistoryResponse(his.response, his.prompt, his.image)}>
-                                            <ListItemText primary={makeFirstLetterCaps(his.prompt)}/>
+                                                        onClick={() => handleOnHistoryResponse(his)}>
+                                            <ListItemText primary={makeFirstLetterCaps(his.historyLabel)}/>
 
                                         </ListItemButton>
                                         <div className={'icon-container p-[2px] bg-gray-200 cursor-pointer'}>

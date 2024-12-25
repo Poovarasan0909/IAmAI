@@ -16,7 +16,10 @@ import {UserContext} from "./context/UserContext";
 
 function App() {
     let {isServerActive, setIsServerActive, setGeolocation} = useContext(AppContext);
+    const [isWindowActive, setIsWindowActive] = useState(true);
     let {state} = useContext(UserContext)
+    window.addEventListener('blur', () => setIsWindowActive(false));
+    window.addEventListener('focus', () => setIsWindowActive(true));
 
     useEffect( () =>  {
         async function checkIsServerActive() {
@@ -33,23 +36,23 @@ function App() {
        checkIsServerActive();
     }, []);
 
-    useEffect( () => {
-        setTimeout(() => {
-            axios('https://api.ipify.org?format=json').then((res) => {
-                axios.get(`https://ipinfo.io/${res.data.ip}/json?token=398c229072b4b7`).then((add) => {
-                    setGeolocation(add.data);
-                    let params = {
-                        userId: state.user ? state.user._id : null,
-                        geolocation:add.data
-                    }
-                    if(!localStorage.getItem('isLoaded')) {
-                        postRequest('/saveGeolocation', params)
-                    }
-                    localStorage.setItem('isLoaded', true);
-                }).catch((e) => console.error(e))
-            }).catch((e) => console.error(e))
-        }, 2000);
-    },[isServerActive])
+    // useEffect( () => {
+    //     setTimeout(() => {
+    //         axios('https://api.ipify.org?format=json').then((res) => {
+    //             axios.get(`https://ipinfo.io/${res.data.ip}/json?token=398c229072b4b7`).then((add) => {
+    //                 setGeolocation(add.data);
+    //                 let params = {
+    //                     userId: state.user ? state.user._id : null,
+    //                     geolocation:add.data
+    //                 }
+    //                 if(!localStorage.getItem('isLoaded')) {
+    //                     postRequest('/saveGeolocation', params)
+    //                 }
+    //                 localStorage.setItem('isLoaded', true);
+    //             }).catch((e) => console.error(e))
+    //         }).catch((e) => console.error(e))
+    //     }, 2000);
+    // },[isServerActive])
 
     return (
       <div className={"container"}>
@@ -57,6 +60,9 @@ function App() {
               <meta charSet="utf-8" />
               <title>IAmAI</title>
           </Helmet>
+          {!isWindowActive && <Helmet>
+              <title>Come Back 🙁</title>
+          </Helmet> }
           <div style={{position: 'absolute', top: 0, right: 0, width: '100%', height: '100%'}}>
               <div id={"top-level-popup-message"}></div>
               <Router>

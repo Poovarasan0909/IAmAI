@@ -5,6 +5,7 @@ const users = require('../models/usersModel');
 const {createUser, createUserData, deleteUserDataById, deleteUserById, checkIsUserExit, getUserDataByUserId, storeIpData} = require('../managers/userManager');
 const multer = require("multer");
 const fs = require("fs");
+const UserData = require('../models/userDataModel');
 
 router.get('/createModule', async (req, res) => {
     try{
@@ -25,22 +26,33 @@ router.post('/createUser', async (req, res) => {
     }
 })
 
-const upload = multer({ dest: 'uploads/'});
+// const upload = multer({ dest: 'uploads/'});
+//
+// router.post('/createUserData', upload.single('image'), async (req, res) => {
+//     let imageBase64 = null;
+//     if(req.file) {
+//         const imageBuffer = fs.readFileSync(req.file.path);
+//         imageBase64 = imageBuffer.toString('base64');
+//     }
+//     try {
+//       await createUserData(req.body, imageBase64).then(() => {
+//         console.log("response After createUserData");
+//       })
+//         res.status(200).json({body: req.body, image: imageBase64});
+//     } catch (error) {
+//         res.status(400).send('Error while creating user data '+ error.message);
+//     }
+// })
 
-router.post('/createUserData', upload.single('image'), async (req, res) => {
-    let imageBase64 = null;
-    if(req.file) {
-        const imageBuffer = fs.readFileSync(req.file.path);
-        imageBase64 = imageBuffer.toString('base64');
-    }
-    try {
-      await createUserData(req.body, imageBase64).then(() => {
-        console.log("response After createUserData");
-      })
-        res.status(200).json({body: req.body, image: imageBase64});
-    } catch (error) {
-        res.status(400).send('Error while creating user data '+ error.message);
-    }
+router.post('/createUserData', async (req, res) => {
+         try{
+           const body = req.body
+           const userData = await createUserData(body);
+           console.log(userData);
+           res.status(200).send(userData);
+         } catch (error) {
+            console.log('Error While creating history: ', error.message)
+         }
 })
 
 router.delete('/deleteUser/:id', async (req, res) => {
@@ -83,5 +95,13 @@ router.post('/saveGeolocation', async (req, res) => {
     } catch(error) {
       console.error(error.message);
     }
+})
+
+router.delete('/deleteAllUserData', async  (req, res) => {
+    const result = await UserData.deleteMany({});
+    res.status(200).json({
+        message: 'All records deleted successfully',
+        deletedCount: result.deletedCount
+    });
 })
 module.exports = router;

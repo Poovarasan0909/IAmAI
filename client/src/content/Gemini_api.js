@@ -1,11 +1,11 @@
-import React, {useContext, useRef, useState} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import robot from '../css/webp/ro.webp';
 import useIsMobile from "../hooks/useIsMobile";
 import {CircularProgress, IconButton} from "@mui/material";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import {UserContext} from "../context/UserContext";
 import UserProfile from "./UserProfile";
-import {multipartPostRequest} from "../API_helper/APIs";
+import {getRequest, multipartPostRequest, postRequest} from "../API_helper/APIs";
 import TaskAlt from '@mui/icons-material/TaskAlt';
 import {AppContext} from "../context/AppContext";
 import SideBar from "./SideBar";
@@ -16,12 +16,14 @@ import spinner from "../css/spinner.svg"
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faImage, faXmark} from "@fortawesome/free-solid-svg-icons";
 import ImageDialog from "../common/ImageDialog";
+import ModelResponse from "./ModelResponse";
 
 
 const GeminiApi = () => {
     const textareaRef = useRef(null);
     const imageInputRef = useRef(null);
 
+    let [conversations, setConversations] = useState([]);
     const [response, setResponse] = useState(false);
     const [question, setQuestion] = useState('');
     const [loading, setLoading] = useState(false);
@@ -30,10 +32,13 @@ const GeminiApi = () => {
     const [previousLineCount, setPreviousLineCount] = useState(1);
     const isMobile = useIsMobile();
     const [historyList, setHistoryList] = useState([]);
+    const [selectedHistory, setSelectedHistory] = useState({})
     const [responseStatus, setResponseStatus] = useState('Loading...');
     const [file, setFile] = useState(null);
     const [questionImg, setQuestionImg] = useState(null);
     const [imageInDialog, setImageInDialog] = useState(null);
+    const [responseText, setResponseText] = useState(null);
+    let [base64Image, setBase64Image] = useState(null);
 
 
     const { state, setState } = useContext(UserContext);
@@ -42,7 +47,7 @@ const GeminiApi = () => {
 
     const fetchResponse = async (prompt) => {
         const formData = new FormData();
-        formData.append('prompt', prompt);
+        formData.append('prompt', JSON.stringify(prompt));
         if(file) {
             formData.append('image', file);
         }
@@ -82,17 +87,18 @@ const GeminiApi = () => {
     // }
 
 
-    const storeSearchHistory = (response, prompt, img) => {
-        const formData = new FormData();
-        formData.append('userId', state.user._id);
-        formData.append('prompt', prompt);
-        formData.append('response', response)
-        if(img) {
-            formData.append('image', img);
-        }
-        multipartPostRequest('/createUserData', formData)
-            .then((res) => setHistoryList([{prompt: prompt, response: response, image: res.data.image}, ...historyList]))
-
+    const storeSearchHistory = (conversation) => {
+        const userId = state.user?._id;
+        const userRole = conversation.filter((val) => val.role === 'user');
+        const lable = userRole.length > 0 ? userRole[userRole.length-1].parts.text : '';
+        postRequest('/createUserData', {id: selectedHistory.id, userId: userId, historyLabel: lable, chatHistory: conversation})
+            .then((res) => {
+                if (userId) {
+                    getRequest(`getUserDataById/${userId}`).then((res) => {
+                        setHistoryList(res.data?.reverse());
+                    })
+                }
+            })
     }
 
     const escapeHTML = (str) => {
@@ -105,22 +111,26 @@ const GeminiApi = () => {
 
 
     const getResponseFromAI = async (prompt) => {
-        let inst = '';
+        let inst = "In this instruction, I tell you how I want the response. " +
+            "`Inside the `chatHistory` There is a list of Objects In that Each Object entry has a 'role' field ('user' or 'model') and a 'parts' field with a 'text' property" +
+            "You should read the user last entry and generate a continuation of the conversation based on the latest 'user' entry " +
+            "you should respond as a 'model' to the last 'users' message. you should generate the text value under the parts only, not generate entire object" +
+            "provide troubleshooting steps for the user's issue with an proper step-by-step example. Respond in a friendly and casual tone, using emojis where appropriate. You should Read the entire conversation before generate the response" +
+            ""
 
         const nameRegex = /what.*your.*name|who.*are.*you|can.*say.*your.*name|tell.*your.*name/i;
         if (nameRegex.test(prompt)) {
             inst += 'If anybody asks your name, tell them "My name is Poovarasan" ';
         }
 
-        inst += 'Prompt: "' + prompt + '"';
         setLoading(true);
         setResponse(true);
         let testRes = null;
         const run = async () => {
             try {
                 setQuestionImg(file);
-                const {data} = await fetchResponse(inst);
-                return {response: data.res, prompt: prompt, img: file};
+                const {data} = await fetchResponse({instructions: inst, chatHistory: conversations });
+                return {response: data.res};
             } catch (err) {
                 console.error(err);
                 return {errorResponse: '!ERROR  : Something Went Wrong', prompt: prompt};
@@ -140,13 +150,22 @@ const GeminiApi = () => {
                 document.getElementById("response_element").innerHTML = '';
             setFile(null);
             if(res.response) {
-                markedResponse(res.response);
+                setResponseText(res.response)
             } else if(res.errorResponse) {
-                markedResponse(`<h6 class="text-red-600 italic">${res.errorResponse}</h6>`)
+                setResponseText(`<h6 class="text-red-600 italic">${res.errorResponse}</h6>`)
             }
             setLoading(false);
+            const convers = [
+                ...conversations,
+                {
+                    role: 'model',
+                    parts: {text: res.response}
+                }]
+            setConversations(convers);
+            conversations = convers;
+            setBase64Image(null);
             if(state.user)
-               storeSearchHistory(res.response, res.prompt, res.img);
+               storeSearchHistory(conversations);
         });
     };
 
@@ -192,8 +211,22 @@ const GeminiApi = () => {
             const prompt = textareaRef.current.value;
             if (prompt.trim().length > 0 || file) {
                 textareaRef.current.value = null;
-                if (document.getElementById("response_element"))
-                    document.getElementById("response_element").innerHTML = '';
+                if(file) {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = (e) => {
+                        setBase64Image(e.target.result);
+                        base64Image = e.target.result;
+                    };
+                }
+                const convers = [
+                    ...conversations,
+                    {
+                        role: 'user',
+                        parts: {text: prompt, image: base64Image}
+                    }];
+                setConversations(convers);
+                conversations = convers
                 getResponseFromAI(prompt);
                 setQuestion(prompt);
             }
@@ -285,6 +318,9 @@ const GeminiApi = () => {
                         setHistoryList={setHistoryList}
                         historyList={historyList}
                         setQuestionImg={setQuestionImg}
+                        setSelectedHistory={setSelectedHistory}
+                        selectedHistory={selectedHistory}
+                        setConversations={setConversations}
                         updateIsSideBarOpen={updateIsSideBarOpen}>
                     </SideBar>
                 </div>
@@ -294,56 +330,79 @@ const GeminiApi = () => {
                         <img src={iamaiLogo} alt="IAmAI"
                              className={'w-[150px] h-[40px] x-[999] absolute top-[10px] left-[60px]'}/>
                     </>}
-                    {response ?
-                        <div className={`h-[75%] ${isMobile ? 'w-[99%]' : 'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
-                            <div
-                                className={`px-2 ${question.length > 0 && 'py-1'} dark:text-white bg-[lavender] dark:bg-[#757575f7] w-fit rounded-t-md mb-2 ` +
-                                    'whitespace-pre-wrap max-w-[100%] max-h-[60%] min-w-[10%] overflow-y-auto'}>
-                                {question}
-                                {questionImg &&
-                                <img src={typeof questionImg === 'string' ? `data:image/jpeg;base64, ${questionImg}` : URL.createObjectURL(questionImg)}
-                                     className={'rounded-2xl mt-3 max-h-[14rem]'}
-                                     onClick={() => {
-                                         setImageInDialog(questionImg);
-                                     }} alt={'Prompt Image'}/>}
+                    <div id={"conversation-content"} className={`h-[75%] ${isMobile ? 'w-[99%]' : 'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
+                        {conversations.length > 0 ? conversations.map((convers, index) => (
+                                <div>
+                                    {convers.role === 'user' &&
+                                        <div key={index}
+                                             className={`px-2 ${convers.length > 0 && 'py-1'} dark:text-white bg-[lavender] dark:bg-[#757575f7] w-fit rounded-t-md mb-2 ` +
+                                                 'whitespace-pre-wrap max-w-[100%] max-h-[60%] min-w-[10%] overflow-y-auto'}>
+                                            {convers.parts.text}
+                                            {convers.parts.image &&
+                                                <img
+                                                    src={typeof convers.parts.image === 'string' ? `${convers.parts.image}` : URL.createObjectURL(convers.parts.image)}
+                                                    className={'rounded-2xl mt-3 max-h-[14rem]'}
+                                                    onClick={() => {
+                                                        setImageInDialog(convers.parts.image);
+                                                    }} alt={'Prompt Image'}/>}
+                                        </div>
+                                    }
+                                    {convers.role === 'model' &&
+                                        <div className={"dark:text-white"}>
+                                            <ModelResponse response={convers.parts?.text} key={index}/>
+                                            <hr className={'dark:text-sky-100 text-[#757575f7]'}/>
+                                        </div>
+                                    }
+                                </div>
+                            )) :
+                            <div style={{position: 'relative'}}
+                                 className={`user-select-none flex items-center justify-center ${isMobile ? 'top-[110px]' : ''}`}>
+                                <img className="robot-image user-select-none"
+                                     src={robot} style={{height: '25rem'}}
+                                     onDoubleClickCapture={(e) => e.preventDefault()}
+                                     alt={"IAMAI"}/>
                             </div>
-                            <hr className={'dark:text-sky-100 text-[#757575f7]'}/>
-                            {loading &&
-                                <div className={'flex justify-center items-center h-[50vh]'}>
-                                    <img alt={"Loading..."} style={{width: '10%'}} src={spinner}/>
-                                    <span className={'dark:text-white'}>{responseStatus}</span>
-                                </div>}
-                            <div id="response_element" className={"dark:text-white"}>
-                                <div dangerouslySetInnerHTML={responseFormateRef.current}></div>
-                            </div>
-                        </div>
-                        :
-                        <div style={{position: 'relative', bottom: '40px'}} className={'user-select-none'}>
-                            <img className="robot-image user-select-none" src={robot} style={{height: '22rem'}}
-                                 alt={"IAMAI"}/>
-                        </div>}
-                    <div className={'flex dark:text-white'}>
-                        {isServerMsgVisible &&
-                            (!isServerActive ?
-                                <>
-                                    <CircularProgress style={{width: '20px', height: '20px'}} color="inherit"/>
-                                    <pre className={'px-2'}>server starting, please wait...</pre>
-                                </> :
-                                <> <TaskAlt style={{width: '20px', height: '20px'}} color={'success'}/>
-                                    <pre>server started.</pre>
-                                </>)
                         }
+                        {loading &&
+                            <div className={'flex justify-center items-center h-[50vh]'} onLoad={() => {
+                                const conversationContent = document.getElementById("conversation-content");
+                                conversationContent.scrollTop = conversationContent.scrollHeight;
+                            }}>
+                                <img alt={"Loading..."} style={{width: '10%'}} src={spinner}/>
+                                <span className={'dark:text-white'}>{responseStatus}</span>
+                            </div>}
                     </div>
                     <input type="file"
                            ref={imageInputRef}
                            accept={"image/*"}
                            className={'hidden'}
-                           onChange={(e) => setFile(e.target.files[0])}/>
+                           onChange={(e) => {
+                               setFile(e.target.files[0]);
+                               const reader = new FileReader();
+                               reader.readAsDataURL(e.target.files[0]);
+                               reader.onload = (e) => {
+                                   setBase64Image(e.target.result);
+                                   base64Image = e.target.result;
+                               };
+                           }}/>
 
                     <div className="input-portion">
+                        <div className={'flex justify-center dark:text-white'}>
+                            {isServerMsgVisible &&
+                                (!isServerActive ?
+                                    <>
+                                        <CircularProgress style={{width: '20px', height: '20px'}} color="inherit"/>
+                                        <pre className={'px-2'}>server starting, please wait...</pre>
+                                    </> :
+                                    <> <TaskAlt style={{width: '20px', height: '20px'}} color={'success'}/>
+                                        <pre>server started.</pre>
+                                    </>)
+                            }
+                        </div>
                         {file && <div className={'image-inside-input'}>
                             <div className={'inline-flex'}>
-                                <img className={'ring-2 ring-blue-500 hover:border-2 cursor-pointer rounded'} width={"60px"}
+                                <img className={'ring-2 ring-blue-500 hover:border-2 cursor-pointer rounded'}
+                                     width={"60px"}
                                      height={"60px"} src={URL.createObjectURL(file)}
                                      alt={"Image"} onClick={() => setImageInDialog(file)}/>
                                 <div className={'flex px-[4px] cancel-img-input '} onClick={() => setFile(null)}>
@@ -371,6 +430,13 @@ const GeminiApi = () => {
                                 onClick={() => {
                                     const prompt = document.getElementById("prompt_inputs").value;
                                     if (prompt.length > 0 || file) {
+                                        setConversations([
+                                            ...conversations,
+                                            {
+                                                role: 'user',
+                                                parts: {text: prompt}
+                                            }
+                                        ]);
                                         getResponseFromAI(prompt);
                                         document.getElementById("prompt_inputs").value = '';
                                         setQuestion(prompt);

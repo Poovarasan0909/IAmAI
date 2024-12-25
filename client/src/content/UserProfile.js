@@ -34,7 +34,7 @@ const UserProfile = ({state, setState}) => {
                 </div>
             </> :
             <>
-                <div className="absolute top-0 right-0 m-3 inline-flex">
+                <div className="absolute top-0 right-0 m-1 inline-flex">
                     <ThemeButton/>
                     <button id="dropdownAvatarNameButton" data-dropdown-toggle="dropdownAvatarName"
                             className="flex items-center text-sm pe-1 font-medium text-gray-900 rounded-full hover:text-blue-600 dark:hover:text-blue-500 md:me-0 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-white"

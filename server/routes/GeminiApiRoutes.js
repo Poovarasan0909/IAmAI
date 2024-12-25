@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {getResponseByPrompt, getAIResponse} = require('../managers/GeminiApiManager');
+const {getResponseByPrompt, getAIResponse, getResponse} = require('../managers/GeminiApiManager');
 const multer = require('multer');
 
 const upload = multer({ dest: 'uploads/'});
@@ -12,14 +12,12 @@ router.post('/geminiAI-data', upload.single('image'), async (req, res) => {
             return res.status(400).json({message: 'Prompt is required'});
         }
         const response = await getResponseByPrompt(req.body.prompt, req.file);
-        res.json({res: response})
+        res.json({res: response});
     } catch (error) {
         console.log(error.message);
         return error.message;
     }
 })
-
-router.post('/createUserData', )
 
 // router.get('/geminiAI-data', async  (req, res) => {
 //     res.setHeader('Content-Type', 'text/event-stream');

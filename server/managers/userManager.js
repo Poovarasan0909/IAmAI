@@ -1,7 +1,11 @@
 const User = require('../models/usersModel');
 const UserData = require('../models/userDataModel');
 const UserGeolocation = require('../models/userGeolocation');
+const ColudinaryAPIs = require('../service/cloudinaryAPIs');
 const mongoose = require('mongoose');
+const {uploadFile} = require("../service/cloudinaryAPIs");
+const axios = require("axios");
+
 
 async function createUser(body) {
     try {
@@ -18,21 +22,35 @@ async function createUser(body) {
     }
 }
 
-async function createUserData(body, imageBase64) {
+async function createUserData(body) {
       try {
+          let userData;
           const userId = new mongoose.Types.ObjectId(body.userId);
-          const userData = new UserData({
-              userId: userId,
-              prompt: body.prompt,
-              response: body.response,
-              image: imageBase64
-          })
-          await userData.save();
+          await processChatHistory(body);
 
-          await User.findByIdAndUpdate(userId, {
-              $push: { userdatas: userData._id }
-          });
+          if(!body.id) {
+              userData = new UserData({
+                  userId: userId,
+                  historyLabel: body.historyLabel,
+                  chatHistory: body.chatHistory
+              })
+              await userData.save();
+              await User.findByIdAndUpdate(userId, {
+                  $push: { userdatas: userData._id }
+              });
+          } else {
+             const _id = new mongoose.Types.ObjectId(body.id);
+              userData = await UserData.findByIdAndUpdate(
+                  _id,
+                  {
+                      chatHistory: body.chatHistory,
+                      historyLabel: body.historyLabel
+                  },
+                  {new: true}
+              );
+          }
           console.log('User Data Updated.');
+          return userData
       } catch(error) {
           console.error('Error fetching user with data:', error);
       }
@@ -82,7 +100,7 @@ async function checkIsUserExit(data) {
 
 async function getUserDataByUserId(id) {
     const userId = new mongoose.Types.ObjectId(id);
-    const userData = await UserData.find({userId: userId});
+    const userData = await UserData.find({userId: userId}).sort({ updatedAt: -1 });
     return userData
 }
 
@@ -112,6 +130,30 @@ async function storeIpData(body) {
 
     } catch (e) {
         console.error("!Error while Geolocation Storing", e)
+    }
+}
+
+
+async function processChatHistory(body) {
+    try {
+        for (const item of body.chatHistory) {
+            if (item.role === 'user' && item.parts?.image) {
+                try {
+                    const uploadedFileLink = await uploadFile(item.parts.image);
+                    if (uploadedFileLink) {
+                        item.parts.image = uploadedFileLink;
+                    } else {
+                        item.parts.image = null;
+                        console.error(`Failed to upload image for item: ${item.id}`);
+                    }
+                } catch (error) {
+                    console.error(`Error uploading image for item: ${item.id}`, error);
+                    item.parts.image = null;
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error processing chat history:", error);
     }
 }
 module.exports = {createUser,

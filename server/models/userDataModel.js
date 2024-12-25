@@ -6,10 +6,18 @@ const userDataSchema = new mongoose.Schema({
         ref: 'User',
         require: true
     },
-    prompt: String,
-    response: String,
-    image:String
-})
+    chatHistory: [{
+        role: {
+            type: String,
+            required: true
+        },
+        parts: {
+            text: String,
+            image: String
+        }
+    }],
+    historyLabel: String
+}, {timestamps: true});
 
 const UserData = mongoose.model('UserData', userDataSchema);
 module.exports = UserData;

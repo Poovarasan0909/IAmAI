@@ -6,6 +6,7 @@ const path = require("path");
 async function getResponseByPrompt(prompt, reqFile) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
+    console.log(prompt, " //..../..//__",reqFile);
 
     if(reqFile) {
       const filePath = path.join(__dirname, '..', 'uploads', reqFile?.filename);
@@ -29,6 +30,15 @@ async function getResponseByPrompt(prompt, reqFile) {
     }
 }
 
+async function getResponse (prompt, reqFile) {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
+
+    const chat = model.startChat({history: chatHistory});
+    let result = await chat.sendMessage(prompt);
+    return result.response.text();
+}
+
 async function getAIResponse(prompt, sendStatus) {
 //   sendStatus("Initializing GoogleGenerativeAI...")
 //   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -46,4 +56,4 @@ async function getAIResponse(prompt, sendStatus) {
 //   return textResponse
 }
 
-module.exports = {getResponseByPrompt, getAIResponse}
+module.exports = {getResponseByPrompt, getAIResponse, getResponse}

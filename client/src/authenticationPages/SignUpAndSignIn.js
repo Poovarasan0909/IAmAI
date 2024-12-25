@@ -9,6 +9,7 @@ import {CircularProgress} from "@mui/material";
 import TaskAlt from "@mui/icons-material/TaskAlt";
 import {AppContext} from "../context/AppContext";
 import ThemeButton from "../content/ThemeButton";
+import {Helmet} from "react-helmet";
 
 
 const SignUpAndSignIn = ({formType}) => {
@@ -100,6 +101,9 @@ const SignUpAndSignIn = ({formType}) => {
 
     return (
         <>
+            <Helmet>
+                <title> {formType} {'IAMAI'}</title>
+            </Helmet>
             <div className={'flex relative min-h-full flex-col justify-center px-6 py-12 lg:px-8 dark:bg-[rgba(52,52,52)]'}>
                 <div className={'absolute right-3 top-3'}>
                    <ThemeButton/>
