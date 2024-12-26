@@ -1,9 +1,8 @@
 const User = require('../models/usersModel');
 const UserData = require('../models/userDataModel');
 const UserGeolocation = require('../models/userGeolocation');
-const ColudinaryAPIs = require('../service/cloudinaryAPIs');
 const mongoose = require('mongoose');
-const {uploadFile} = require("../service/cloudinaryAPIs");
+const {uploadFile, deleteImage} = require("../service/cloudinaryAPIs");
 const axios = require("axios");
 
 
@@ -58,6 +57,14 @@ async function createUserData(body) {
 async function deleteUserDataById(userDataId) {
    try {
       const result = await UserData.findByIdAndDelete(userDataId);
+      if (result) {
+           console.log(`UserData with ID ${userDataId} deleted successfully.`);
+           const publicIds = result.chatHistory.filter(item => item.role === "user" && item.parts?.image)
+               .map(item => item.parts.image.split('/').slice(-1)[0].split('.')[0]);
+           if(publicIds.length > 0) {
+               await deleteImage(publicIds);
+           }
+      }
       if(result) {
           console.log(`UserData with ID ${userDataId} deleted successfully.`);
       } else {

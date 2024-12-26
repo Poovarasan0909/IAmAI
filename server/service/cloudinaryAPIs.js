@@ -18,4 +18,14 @@ const uploadFile = async (file) => {
     }
 }
 
-module.exports = { uploadFile }
+const deleteImage = async (publicIds) => {
+    try {
+        cloudinary.api.delete_resources(publicIds)
+            .then(result => console.log("Image deleted successfully", result))
+            .catch(error => console.error("Error during deleteImage:", error.message));
+    } catch (error) {
+        console.error("During Delete image => ", error);
+    }
+}
+
+module.exports = { uploadFile, deleteImage }
