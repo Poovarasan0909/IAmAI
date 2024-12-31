@@ -24,8 +24,6 @@ const GeminiApi = () => {
     const imageInputRef = useRef(null);
 
     let [conversations, setConversations] = useState([]);
-    const [response, setResponse] = useState(false);
-    const [question, setQuestion] = useState('');
     const [loading, setLoading] = useState(false);
     const [isSideBarOpen, setIsSideBarOpen] = useState(false);
     const [textareaHeight, setTextareaHeight] = useState('4.5rem');
@@ -33,17 +31,16 @@ const GeminiApi = () => {
     const isMobile = useIsMobile();
     const [historyList, setHistoryList] = useState([]);
     const [selectedHistory, setSelectedHistory] = useState({})
-    const [responseStatus, setResponseStatus] = useState('Loading...');
+    const [responseStatus, setResponseStatus] = useState('Thinking...');
     const [file, setFile] = useState(null);
-    const [questionImg, setQuestionImg] = useState(null);
     const [imageInDialog, setImageInDialog] = useState(null);
-    const [responseText, setResponseText] = useState(null);
     let [base64Image, setBase64Image] = useState(null);
+    const [userInput, setUserInput] = useState('');
+    const [selectedHistoryId, setSelectedHistoryId] = useState(null);
 
 
     const { state, setState } = useContext(UserContext);
     const {isServerActive, isServerMsgVisible} = useContext(AppContext);
-    const responseFormateRef = useRef(null);
 
     const fetchResponse = async (prompt) => {
         const formData = new FormData();
@@ -91,11 +88,14 @@ const GeminiApi = () => {
         const userId = state.user?._id;
         const userRole = conversation.filter((val) => val.role === 'user');
         const lable = userRole.length > 0 ? userRole[userRole.length-1].parts.text : '';
-        postRequest('/createUserData', {id: selectedHistory.id, userId: userId, historyLabel: lable, chatHistory: conversation})
+        postRequest('/createUserData', {id: selectedHistoryId, userId: userId, historyLabel: lable, chatHistory: conversation})
             .then((res) => {
                 if (userId) {
                     getRequest(`getUserDataById/${userId}`).then((res) => {
                         setHistoryList(res.data?.reverse());
+                        const historyIdToFind = selectedHistoryId
+                        const selectedHistory = res.data.filter((val) => val._id === historyIdToFind)[0];
+                        setConversations(selectedHistory?.chatHistory);
                     })
                 }
             })
@@ -124,11 +124,9 @@ const GeminiApi = () => {
         }
 
         setLoading(true);
-        setResponse(true);
         let testRes = null;
         const run = async () => {
             try {
-                setQuestionImg(file);
                 const {data} = await fetchResponse({instructions: inst, chatHistory: conversations });
                 return {response: data.res};
             } catch (err) {
@@ -149,11 +147,6 @@ const GeminiApi = () => {
             if (document.getElementById("response_element"))
                 document.getElementById("response_element").innerHTML = '';
             setFile(null);
-            if(res.response) {
-                setResponseText(res.response)
-            } else if(res.errorResponse) {
-                setResponseText(`<h6 class="text-red-600 italic">${res.errorResponse}</h6>`)
-            }
             setLoading(false);
             const convers = [
                 ...conversations,
@@ -200,6 +193,24 @@ const GeminiApi = () => {
         document.body.removeChild(span);
         return lines;
     }
+    const setChatWithImage = () => {
+        if(file) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                setBase64Image(e.target.result);
+                base64Image = e.target.result;
+            };
+        }
+        const convers = [
+            ...conversations,
+            {
+                role: 'user',
+                parts: {text: userInput, image: base64Image}
+            }];
+        setConversations(convers);
+        conversations = convers
+    }
 
     const handleKeyDown = (event) => {
         const textAreaValue = textareaRef.current.value;
@@ -211,24 +222,8 @@ const GeminiApi = () => {
             const prompt = textareaRef.current.value;
             if (prompt.trim().length > 0 || file) {
                 textareaRef.current.value = null;
-                if(file) {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = (e) => {
-                        setBase64Image(e.target.result);
-                        base64Image = e.target.result;
-                    };
-                }
-                const convers = [
-                    ...conversations,
-                    {
-                        role: 'user',
-                        parts: {text: prompt, image: base64Image}
-                    }];
-                setConversations(convers);
-                conversations = convers
+                setChatWithImage()
                 getResponseFromAI(prompt);
-                setQuestion(prompt);
             }
         }
         const currentLineCount = textareaRef.current.value?.split('\n').length;
@@ -313,14 +308,11 @@ const GeminiApi = () => {
                         textareaRef={textareaRef}
                         setLoading={setLoading}
                         isSideBarOpen={isSideBarOpen}
-                        setResponse={setResponse}
-                        setQuestion={setQuestion}
                         setHistoryList={setHistoryList}
                         historyList={historyList}
-                        setQuestionImg={setQuestionImg}
-                        setSelectedHistory={setSelectedHistory}
-                        selectedHistory={selectedHistory}
                         setConversations={setConversations}
+                        selectedHistoryId={selectedHistoryId}
+                        setSelectedHistoryId={setSelectedHistoryId}
                         updateIsSideBarOpen={updateIsSideBarOpen}>
                     </SideBar>
                 </div>
@@ -331,7 +323,7 @@ const GeminiApi = () => {
                              className={'w-[150px] h-[40px] x-[999] absolute top-[10px] left-[60px]'}/>
                     </>}
                     <div id={"conversation-content"} className={`h-[75%] ${isMobile ? 'w-[99%]' : 'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
-                        {conversations.length > 0 ? conversations.map((convers, index) => (
+                        {conversations?.length > 0 ? conversations.map((convers, index) => (
                                 <div>
                                     {convers.role === 'user' &&
                                         <div key={index}
@@ -378,12 +370,14 @@ const GeminiApi = () => {
                            className={'hidden'}
                            onChange={(e) => {
                                setFile(e.target.files[0]);
-                               const reader = new FileReader();
-                               reader.readAsDataURL(e.target.files[0]);
-                               reader.onload = (e) => {
-                                   setBase64Image(e.target.result);
-                                   base64Image = e.target.result;
-                               };
+                               if(e.target.files[0]) {
+                                   const reader = new FileReader();
+                                   reader.readAsDataURL(e.target.files[0]);
+                                   reader.onload = (e) => {
+                                       setBase64Image(e.target.result);
+                                       base64Image = e.target.result;
+                                   };
+                               }
                            }}/>
 
                     <div className="input-portion">
@@ -422,24 +416,17 @@ const GeminiApi = () => {
                                 placeholder="Ask what you want to know!"
                                 onPaste={(e)=> handleOnPast(e) }
                                 onDrop={(e)=> handleOnDrag(e)}
+                                onChange={(e) => setUserInput(e.target.value)}
                             />
                             <button
                                 className="sent_button"
                                 disabled={!isServerActive}
                                 title={"Send"}
                                 onClick={() => {
-                                    const prompt = document.getElementById("prompt_inputs").value;
-                                    if (prompt.length > 0 || file) {
-                                        setConversations([
-                                            ...conversations,
-                                            {
-                                                role: 'user',
-                                                parts: {text: prompt}
-                                            }
-                                        ]);
-                                        getResponseFromAI(prompt);
+                                    if (userInput.length > 0 || file) {
+                                        setChatWithImage();
+                                        getResponseFromAI(userInput);
                                         document.getElementById("prompt_inputs").value = '';
-                                        setQuestion(prompt);
                                     }
                                 }}
                             >

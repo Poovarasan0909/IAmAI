@@ -13,7 +13,8 @@ const userDataSchema = new mongoose.Schema({
         },
         parts: {
             text: String,
-            image: String
+            image: String,
+            imageUrl: String
         }
     }],
     historyLabel: String

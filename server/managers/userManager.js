@@ -25,7 +25,7 @@ async function createUserData(body) {
       try {
           let userData;
           const userId = new mongoose.Types.ObjectId(body.userId);
-          await processChatHistory(body);
+          await convertImageToLinkInChatHistory(body);
 
           if(!body.id) {
               userData = new UserData({
@@ -141,22 +141,26 @@ async function storeIpData(body) {
 }
 
 
-async function processChatHistory(body) {
+async function convertImageToLinkInChatHistory(body) {
     try {
         for (const item of body.chatHistory) {
-            if (item.role === 'user' && item.parts?.image) {
+            if (item.role === 'user' && item.parts?.image && item.parts.imageUrl === undefined) {
                 try {
                     const uploadedFileLink = await uploadFile(item.parts.image);
                     if (uploadedFileLink) {
                         item.parts.image = uploadedFileLink;
+                        item.parts.imageUrl = uploadedFileLink;
                     } else {
                         item.parts.image = null;
+                        item.parts.imageUrl = null;
                         console.error(`Failed to upload image for item: ${item.id}`);
                     }
                 } catch (error) {
                     console.error(`Error uploading image for item: ${item.id}`, error);
                     item.parts.image = null;
                 }
+            } else if(item.role === 'user' && item.parts?.image) {
+                item.parts.image = item.parts.imageUrl;
             }
         }
     } catch (error) {

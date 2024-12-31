@@ -34,8 +34,8 @@ const DrawerHeader = styled("div")(({theme}) => ({
     justifyContent: "flex-end",
 }));
 const SideBar = ({
-                     isSideBarOpen, updateIsSideBarOpen, setResponse, setLoading, setQuestion, setConversations,
-                     historyList, setHistoryList, textareaRef, setQuestionImg, setSelectedHistory, selectedHistory
+                     isSideBarOpen, updateIsSideBarOpen, setLoading, setConversations,
+                     historyList, setHistoryList, textareaRef, selectedHistoryId, setSelectedHistoryId
 
                  }) => {
     const {state} = useContext(UserContext);
@@ -57,18 +57,11 @@ const SideBar = ({
     }
 
     const handleOnHistoryResponse = (his) => {
-        setQuestionImg(null);
-        setResponse(true);
-        setLoading(false);
-        // setQuestion(prompt);
-        // setQuestionImg(image);
-        // const selectedHistory =
-        // markedResponse(response);
-        setSelectedHistory({id : his._id});
-        selectedHistory = {id : his._id}
-        console.log(selectedHistory, "his,..", his.chatHistory);
+        setLoading(true);
+        setSelectedHistoryId(his._id);
         convertImageLinkToImageString(his.chatHistory, (chatHistory) => {
             setConversations(chatHistory)
+            setLoading(false);
         })
         if (isMobile)
             updateIsSideBarOpen(!isSideBarOpen);
@@ -92,8 +85,8 @@ const SideBar = ({
         try {
             for (const chat of chatHistory) {
                 if (chat.role === 'user' && chat.parts?.image) {
-                    const imageData = await imageLinkToBase64(chat.parts.image); // Await here
-                    chat.parts.image = imageData || null; // Update chat.parts.image directly
+                    const imageData = await imageLinkToBase64(chat.parts.image);
+                    chat.parts.image = imageData || null;
                 }
             }
             callback(chatHistory);
@@ -103,6 +96,7 @@ const SideBar = ({
     }
 
     const makeFirstLetterCaps = (value) => {
+        if(!value) return value;
         const firstChar = value.charAt(0).toUpperCase();
         return firstChar + value.substring(1);
     }
@@ -156,8 +150,8 @@ const SideBar = ({
                     <Divider/>
                     <button type="button"
                             onClick={() => {
-                                setResponse(false);
                                 setConversations([]);
+                                setSelectedHistoryId(null);
                                 if (isMobile)
                                     updateIsSideBarOpen(false);
                                 textareaRef.current.value = "";
@@ -172,7 +166,7 @@ const SideBar = ({
                             <div className={'px-2 pt-3 dark:text-white'}><b>History</b></div>
                             <List className={'dark:text-white '} sx={{overflowX: 'auto', maxHeight: '72vh'}}>
                                 {historyList && historyList.map((his) => (
-                                    <ListItem key={his} className={`${!isMobile ?'sidebar-list-item': ''} truncate`} disablePadding>
+                                    <ListItem key={his} className={`${!isMobile ?'sidebar-list-item': ''} truncate ${his._id === selectedHistoryId ?'bg-slate-300 dark:bg-gray-500' : ''}`} disablePadding>
                                         <ListItemButton className={'truncate'}
                                                         style={{padding: '0 10px 0 10px'}}
                                                         onClick={() => handleOnHistoryResponse(his)}>

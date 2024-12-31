@@ -48,7 +48,6 @@ router.post('/createUserData', async (req, res) => {
          try{
            const body = req.body
            const userData = await createUserData(body);
-           console.log(userData);
            res.status(200).send(userData);
          } catch (error) {
             console.log('Error While creating history: ', error.message)

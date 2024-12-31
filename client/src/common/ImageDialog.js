@@ -4,14 +4,13 @@ import CloseIcon from "@mui/icons-material/Close";
 import sampleImg from '../css/spinner.svg'
 
 const ImageDialog = ({imageInDialog, setImageInDialog}) => {
-    console.log(imageInDialog?.toString())
     return (
         <Dialog open={imageInDialog}
                 sx={{'& .MuiDialog-paper': {backgroundColor: 'rgba(255,255,255,0)'}}}>
             <img alt={'Image is not loaded'}
                  className={'user-select-none'}
                  src={imageInDialog ? typeof imageInDialog === 'string' ?
-                     imageInDialog.startsWith('data:image/') ? imageInDialog : `data:image/jpeg;base64, ${imageInDialog}` :
+                     imageInDialog.startsWith('data:image/') ? imageInDialog : imageInDialog.startsWith('https://')? imageInDialog : `data:image/jpeg;base64, ${imageInDialog}` :
                      URL.createObjectURL(imageInDialog) : sampleImg}/>
             <IconButton
                 aria-label="close"
