@@ -15,6 +15,13 @@ async function getResponseByPrompt(prompt, reqFile) {
           displayName: reqFile.originalname,
       });
       const fileUri = uploadResult.file.uri;
+      const tokenCount = await model.countTokens([prompt, {
+          fileData: {
+              fileUri,
+              mimeType: reqFile.mimetype
+          },
+      }])
+      console.log("Requested Token Count => ",tokenCount);
       const result = await model.generateContent([
           prompt, {
               fileData: {

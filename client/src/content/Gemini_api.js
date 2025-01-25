@@ -5,13 +5,12 @@ import {CircularProgress, IconButton} from "@mui/material";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import {UserContext} from "../context/UserContext";
 import UserProfile from "./UserProfile";
-import {getRequest, multipartPostRequest, postRequest} from "../API_helper/APIs";
+import {getRequest, postRequest} from "../API_helper/APIs";
 import TaskAlt from '@mui/icons-material/TaskAlt';
 import {AppContext} from "../context/AppContext";
 import SideBar from "./SideBar";
 import iamaiLogo from "../css/IAMAI-19-09-2024.png";
 import SendIcon from '@mui/icons-material/Send';
-import {markedResponse} from "./markedResponse";
 import spinner from "../css/spinner.svg"
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faImage, faXmark} from "@fortawesome/free-solid-svg-icons";
@@ -30,7 +29,6 @@ const GeminiApi = () => {
     const [previousLineCount, setPreviousLineCount] = useState(1);
     const isMobile = useIsMobile();
     const [historyList, setHistoryList] = useState([]);
-    const [selectedHistory, setSelectedHistory] = useState({})
     const [responseStatus, setResponseStatus] = useState('Thinking...');
     const [file, setFile] = useState(null);
     const [imageInDialog, setImageInDialog] = useState(null);
@@ -45,15 +43,45 @@ const GeminiApi = () => {
     const fetchResponse = async (prompt) => {
         const formData = new FormData();
         formData.append('prompt', JSON.stringify(prompt));
-        if(file) {
-            formData.append('image', file);
-        }
         try {
-         const response = multipartPostRequest('/geminiAI-data', formData)
-         return response;
+            let response = null
+            if (file) {
+                response = await uploadFileInChunks(file, prompt);
+            } else {
+                response = postRequest('/gemini-AI-response', formData)
+            }
+            return response;
         } catch (error) {
-           console.error(error)
+            console.error(error)
         }
+    }
+
+    const uploadFileInChunks = async (file, prompt) => {
+        const chunkSize = 1024 * 1024;
+        const totalChunks = Math.ceil(file.size / chunkSize);
+
+        for(let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * chunkSize;
+            const end = Math.min(file.size, start + chunkSize);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('chunk', chunk);
+            formData.append('chunkIndex', chunkIndex);
+            formData.append('totalChunks', totalChunks);
+            formData.append('fileName', file.name);
+            formData.append('prompt', JSON.stringify(prompt));
+            try {
+               const response = await postRequest('/gemini-AI-response', formData);
+                if(response.data && response.data.isFinal) {
+                   return response;
+               }
+            } catch (error) {
+                console.error(`Error uploading chunk ${chunkIndex + 1}`, error);
+                throw error;
+            }
+        }
+
     }
     // const fetchResponse = async (prompt) => {
     //     const baseUrl = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.29.57:4000' :  packageJson.baseURL;
@@ -95,7 +123,8 @@ const GeminiApi = () => {
                         setHistoryList(res.data?.reverse());
                         const historyIdToFind = selectedHistoryId
                         const selectedHistory = res.data.filter((val) => val._id === historyIdToFind)[0];
-                        setConversations(selectedHistory?.chatHistory);
+                        if(selectedHistory)
+                          setConversations(selectedHistory?.chatHistory);
                     })
                 }
             })
@@ -127,7 +156,13 @@ const GeminiApi = () => {
         let testRes = null;
         const run = async () => {
             try {
-                const {data} = await fetchResponse({instructions: inst, chatHistory: conversations });
+                const chatList = JSON.parse(JSON.stringify(conversations));
+                for (let i = 0; i < chatList.length; i++) {
+                    if(chatList[i].parts && chatList[i].parts.image) {
+                        delete chatList[i].parts.image;
+                    }
+                }
+                const {data} = await fetchResponse({instructions: inst, chatHistory: chatList });
                 return {response: data.res};
             } catch (err) {
                 console.error(err);
@@ -303,7 +338,7 @@ const GeminiApi = () => {
             </div>}
             <ImageDialog imageInDialog={imageInDialog} setImageInDialog={setImageInDialog}/>
             <div className="main-container">
-                <div className="title-container" style={!isSideBarOpen ? {width: 0} : {width: '10%'}}>
+                <div className="title-container transition-all duration-1000" style={!isSideBarOpen ? {width: 0} : {width: '10%'}} >
                     <SideBar
                         textareaRef={textareaRef}
                         setLoading={setLoading}
@@ -342,7 +377,7 @@ const GeminiApi = () => {
                                     {convers.role === 'model' &&
                                         <div className={"dark:text-white"}>
                                             <ModelResponse response={convers.parts?.text} key={index}/>
-                                            <hr className={'dark:text-sky-100 text-[#757575f7]'}/>
+                                            <hr className={'dark:text-sky-100 text-[#757575f7] mt-0.5'}/>
                                         </div>
                                     }
                                 </div>

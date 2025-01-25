@@ -310,3 +310,52 @@ p {
 .image-inside-input .cancel-img-input {
     display: none;
 }
+#conversation-content td, #conversation-content th {
+    border: 1px solid #c6c9cc;
+}
+
+#conversation-content tr:nth-child(even) {
+   background-color: #e4e4e4;
+}
+
+.dark #conversation-content tr:nth-child(even) {
+    background-color: #837f7f;
+}
+
+.dark #conversation-content td, .dark #conversation-content th {
+    border: 1px solid #787676;
+}
+#conversation-content table {
+    border-collapse: collapse;
+    width: 100%;
+}
+.theme-button-circle {
+    background-color: blue;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.5s ease-in-out, background-color 0.3s ease-in-out;
+}
+#theme-button {
+    background-color: #00000014;
+    width: 62px;
+    height: 34px;
+    border-radius: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    position: relative;
+    user-select: none;
+    margin-right: 5px;
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+.dark #theme-button {
+    background-color: #9ca3af;
+}
+
