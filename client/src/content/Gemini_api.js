@@ -338,7 +338,7 @@ const GeminiApi = () => {
             </div>}
             <ImageDialog imageInDialog={imageInDialog} setImageInDialog={setImageInDialog}/>
             <div className="main-container">
-                <div className="title-container transition-all duration-1000" style={!isSideBarOpen ? {width: 0} : {width: '10%'}} >
+                <div className="title-container" style={!isSideBarOpen ? {width: 0} : {width: '10%'}} >
                     <SideBar
                         textareaRef={textareaRef}
                         setLoading={setLoading}
