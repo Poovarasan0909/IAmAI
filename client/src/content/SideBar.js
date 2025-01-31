@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import styled from "styled-components";
 import {
     Box,
@@ -7,46 +7,70 @@ import {
     List,
     ListItem,
     ListItemButton,
-    ListItemText,
+    ListItemText, Slide,
 } from "@mui/material";
 import useIsMobile from "../hooks/useIsMobile";
 import {UserContext} from "../context/UserContext";
 import {deleteRequest, getRequest} from "../API_helper/APIs";
 import {useNavigate} from "react-router-dom";
 import Drawer from "@mui/material/Drawer";
-import {useTheme} from "@mui/material/styles";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import MenuIcon from "@mui/icons-material/Menu";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import iamaiLogo from "../css/IAMAI-19-09-2024.png"
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faPlus, faXmark} from "@fortawesome/free-solid-svg-icons";
+import {faPlus, faEllipsis} from "@fortawesome/free-solid-svg-icons";
 import {AppContext} from "../context/AppContext";
-import {markedResponse} from "./markedResponse";
 import axios from "axios";
 
 const DrawerHeader = styled("div")(({theme}) => ({
     display: "flex",
     alignItems: "center",
     padding: theme?.spacing ? theme.spacing(0, 1) : '8px',
-    // necessary for content to be below app bar
     ...theme?.mixins?.toolbar,
     justifyContent: "flex-end",
 }));
 const SideBar = ({
                      isSideBarOpen, updateIsSideBarOpen, setLoading, setConversations,
-                     historyList, setHistoryList, textareaRef, selectedHistoryId, setSelectedHistoryId
-
+                     historyList, setHistoryList, textareaRef, selectedHistoryId, setSelectedHistoryId,
+                     listItemPopupMenuId, setListItemPopupMenuId
                  }) => {
     const {state} = useContext(UserContext);
     const navigate = useNavigate();
-    const theme = useTheme();
     const {themeMode} = useContext(AppContext);
+    const [iconPosition, setIconPosition] = useState({ top: 0, left: 0, bottom: 0 });
+    const listRef = useRef(null);
+    const [mouseHoveredListId, setMouseHoveredListId] = useState(null);
 
     useEffect(() => {
         const userId = state.user?._id;
-         getUserDataByUserId(userId);
+        getUserDataByUserId(userId);
     }, [state]);
+
+
+    const handleScroll = () => {
+        if (!listRef.current) return;
+        setTimeout(() => {
+            const listItems = listRef.current.querySelectorAll('li');
+            listItems.forEach((ellipseButton) => {
+                if (ellipseButton) {
+                    const name = ellipseButton.getAttribute("name")
+                    if (name === listItemPopupMenuId) {
+                        const ellipsisButtonPosition = ellipseButton.getBoundingClientRect();
+                        setIconPosition({...iconPosition,top: ellipsisButtonPosition.top, bottom: ellipsisButtonPosition.bottom})
+                    }
+                }
+            });
+        }, 50)
+    };
+
+    const handleMenuOpen = (event, hisId) => {
+        event.stopPropagation();
+        const iconRect = event.currentTarget.getBoundingClientRect();
+        setIconPosition({top: iconRect.top, left: iconRect.left, bottom: iconRect.bottom});
+        setListItemPopupMenuId(listItemPopupMenuId === hisId ? null : hisId);
+    }
 
     const getUserDataByUserId = (userId) => {
         if (userId) {
@@ -91,12 +115,12 @@ const SideBar = ({
             }
             callback(chatHistory);
         } catch (error) {
-           console.log("Error while converting image link to base64: ", error);
+            console.log("Error while converting image link to base64: ", error);
         }
     }
 
     const makeFirstLetterCaps = (value) => {
-        if(!value) return value;
+        if (!value) return value;
         const firstChar = value.charAt(0).toUpperCase();
         return firstChar + value.substring(1);
     }
@@ -104,6 +128,7 @@ const SideBar = ({
 
     const drawerWidth = 270;
 
+    const isMenuOpen = Boolean(listItemPopupMenuId);
     return (
         <Box sx={{display: "flex"}}>
             <IconButton
@@ -114,13 +139,13 @@ const SideBar = ({
                 className={'p-0 dark:text-amber-50'}
                 sx={[
                     {
-                        mr: 2,
-                        ml: 2
+                        mr: 1, ml: 1, mb: 1
                     },
+                    isMobile && {mr: 0, mb: 4},
                     isSideBarOpen && {display: "none"},
                 ]}
             >
-                <MenuIcon/>
+                <ArrowForwardIosIcon/>
             </IconButton>
             {isSideBarOpen &&
                 <Drawer
@@ -137,68 +162,109 @@ const SideBar = ({
                     anchor="left"
                     open={isSideBarOpen}
                 >
-                    <DrawerHeader style={{position: "sticky"}}>
-                        <img src={iamaiLogo} alt="IAmAI" style={{width: '150px', height: '40px'}}/>
-                        <IconButton className={'dark:text-white'} onClick={() => updateIsSideBarOpen(!isSideBarOpen)}>
-                            {theme.direction === "ltr" ? (
-                                <ChevronLeftIcon/>
-                            ) : (
-                                <ChevronRightIcon/>
-                            )}
-                        </IconButton>
-                    </DrawerHeader>
-                    <Divider/>
-                    <button type="button"
-                            onClick={() => {
-                                setConversations([]);
-                                setSelectedHistoryId(null);
-                                if (isMobile)
-                                    updateIsSideBarOpen(false);
-                                textareaRef.current.value = "";
-                                textareaRef.current.focus();
-                            }}
-                            className="mt-2 ml-8 text-white w-3/4 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 shadow-lg shadow-blue-500/50 dark:shadow-lg dark:shadow-blue-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 ">
-                        <FontAwesomeIcon icon={faPlus} style={{fontWeight: 'bold'}}/>
-                        {'        New Chat'}
-                    </button>
+                    <Slide direction="right" in={isSideBarOpen} mountOnEnter unmountOnExit timeout={500}>
+                        <div>
+                            <DrawerHeader style={{position: "sticky"}}>
+                                <img src={iamaiLogo} alt="IAmAI"
+                                     style={{width: '150px', height: '40px', marginRight: '40px'}}/>
+                            </DrawerHeader>
+                            <Divider/>
+                            <button type="button"
+                                    onClick={() => {
+                                        setConversations([]);
+                                        setSelectedHistoryId(null);
+                                        if (isMobile)
+                                            updateIsSideBarOpen(false);
+                                        textareaRef.current.value = "";
+                                        textareaRef.current.focus();
+                                    }}
+                                    className="mt-2 ml-8 text-white w-3/4 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 shadow-lg shadow-blue-500/50 dark:shadow-lg dark:shadow-blue-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 ">
+                                <FontAwesomeIcon icon={faPlus} style={{fontWeight: 'bold'}}/>
+                                {'        New Chat'}
+                            </button>
 
-                    {state.user ? <>
-                            <div className={'px-2 pt-3 dark:text-white'}><b>History</b></div>
-                            <List className={'dark:text-white '} sx={{overflowX: 'auto', maxHeight: '72vh'}}>
-                                {historyList && historyList.map((his) => (
-                                    <ListItem key={his} className={`${!isMobile ?'sidebar-list-item': ''} truncate ${his._id === selectedHistoryId ?'bg-slate-300 dark:bg-gray-500' : ''}`} disablePadding>
-                                        <ListItemButton className={'truncate'}
-                                                        style={{padding: '0 10px 0 10px'}}
-                                                        onClick={() => handleOnHistoryResponse(his)}>
-                                            <ListItemText primary={makeFirstLetterCaps(his.historyLabel)}/>
+                            {state.user ? <>
+                                    <div className={'px-2 pt-3 dark:text-white'}><b>History</b></div>
+                                        <List ref={listRef} className={'dark:text-white '} sx={{overflowX: 'auto', maxHeight: '72vh'}}
+                                              onScroll={handleScroll}>
+                                            {historyList && historyList.map((his) => (
+                                                <ListItem key={his._id} name={his._id}
+                                                          onMouseEnter={() => setMouseHoveredListId(his._id)}
+                                                          onMouseLeave={() => setMouseHoveredListId(null)}
+                                                          className={`${!isMobile ? 'sidebar-list-item' : ''} truncate ${his._id === selectedHistoryId ? 'bg-slate-300 dark:bg-gray-500' : ''}`}
+                                                          disablePadding>
+                                                    <ListItemButton className={'truncate'}
+                                                                    style={{padding: '0 0 0 10px'}}
+                                                                    onClick={() => handleOnHistoryResponse(his)}>
+                                                        <ListItemText primary={makeFirstLetterCaps(his.historyLabel)}/>
+                                                    {(mouseHoveredListId === his._id || listItemPopupMenuId === his._id || selectedHistoryId === his._id) &&
+                                                        <div className={'icon-container p-[2px] cursor-pointer dark:bg-[rgba(64,61,61,0.82)] bg-[rgba(204,202,202,0.82)] rounded-tl-[8px]'}
+                                                             onClick={(event) => handleMenuOpen(event, his._id)} key={his._id} name={his._id}>
+                                                                <FontAwesomeIcon icon={faEllipsis} className={'dark:text-white'}/>
+                                                        </div>}
+                                                    </ListItemButton>
+                                                </ListItem>
+                                            ))}
 
-                                        </ListItemButton>
-                                        <div className={'icon-container p-[2px] bg-gray-200 cursor-pointer'}>
-                                            <FontAwesomeIcon icon={faXmark} className={'text-red-500'}
-                                                             onClick={() => {
-                                                                 setHistoryList(historyList.filter((val) => his._id !== val._id))
-                                                                 deleteRequest(`deleteUserData/${his._id}`)
-                                                                 .then(() => getUserDataByUserId(state.user?._id))}}/>
-                                        </div>
-                                    </ListItem>
-                                ))}
-                            </List>
+                                            {isMenuOpen &&
+                                                <div style={{
+                                                         left: iconPosition.left - 98,
+                                                         top: iconPosition.top + (iconPosition.bottom + 100 > window.innerHeight ? -90 : 30),
+                                                         boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                                                         zIndex: 2000,
+                                                         borderRadius: "8px",
+                                                         padding: "8px 7px",
+                                                         minWidth: "150px",
+                                                         border: "1px solid rgba(0, 0, 0, 0.1)",
+                                                         backgroundColor: themeMode === 'light' ? 'white' : 'rgb(116,116,117)'
+                                                }} className={"fixed"}>
+                                                    <div className={"cursor-pointer rounded hover:bg-blue-50 p-1 dark:hover:bg-[#0000005c]"}>
+                                                        <span className={"pr-2"}><DriveFileRenameOutlineIcon/></span>
+                                                        Rename
+                                                    </div>
+                                                    <div className={"text-[#ff7777] cursor-pointer rounded p-1 hover:bg-red-100 dark:hover:bg-[#0000005c]"}
+                                                    onClick={() => {
+                                                        setHistoryList(historyList.filter((val) => listItemPopupMenuId !== val._id))
+                                                        deleteRequest(`deleteUserData/${listItemPopupMenuId}`)
+                                                            .then(() => getUserDataByUserId(state.user?._id))
+                                                    }}>
+                                                        <span className={"pr-2 "}><DeleteIcon/></span>
+                                                        Delete
+                                                    </div>
+                                                </div>
+                                            }
+                                        </List>
 
-                            {historyList && historyList.length === 0 &&
-                                <h6 className={'text-center mt-6 dark:text-white'}>No History Found Yet</h6>}
-                        </>
-                        : <>
-                            <div className={'text-center mt-12 dark:text-white'}>
-                                <h6>Sign in to access additional benefits.</h6>
-                                <button
-                                    className={`cursor-pointer mr-3 inline-flex items-center rounded-full lg:px-4 py-1 text-1xl font-mono font-semibold text-blue-600
+                                    {historyList && historyList.length === 0 &&
+                                        <h6 className={'text-center mt-6 dark:text-white'}>No History Found Yet</h6>}
+                                </>
+                                : <>
+                                    <div className={'text-center mt-12 dark:text-white'}>
+                                        <h6>Sign in to access additional benefits.</h6>
+                                        <button
+                                            className={`cursor-pointer mr-3 inline-flex items-center rounded-full lg:px-4 py-1 text-1xl font-mono font-semibold text-blue-600
                             hover:text-white border-2 border-blue-600 hover:bg-blue-600 transition ease-in-out delay-150 hover:translate-y-1 hover:scale-75 duration-300 focus:bg-transparent max-md:px-1`}
-                                    onClick={() => navigate("/IAmAI/signin")}>
-                                    Sign in
-                                </button>
-                            </div>
-                        </>}
+                                            onClick={() => navigate("/IAmAI/signin")}>
+                                            Sign in
+                                        </button>
+                                    </div>
+                                </>}
+                        </div>
+                    </Slide>
                 </Drawer>}
+            {isSideBarOpen &&
+                <IconButton className={'dark:text-white'}
+                            onClick={() => updateIsSideBarOpen(!isSideBarOpen)}>
+                    <ArrowBackIosIcon/>
+                </IconButton>}
+            {isMobile && !isSideBarOpen && <img src={iamaiLogo} alt="IAmAI"
+                                                style={{
+                                                    maxWidth: '130px',
+                                                    height: '40px',
+                                                    marginRight: '40px',
+                                                    marginBottom: '34px',
+                                                    zIndex: 9999
+                                                }}/>}
         </Box>
     );
 }

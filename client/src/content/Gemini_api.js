@@ -35,6 +35,7 @@ const GeminiApi = () => {
     let [base64Image, setBase64Image] = useState(null);
     const [userInput, setUserInput] = useState('');
     const [selectedHistoryId, setSelectedHistoryId] = useState(null);
+    const [listItemPopupMenuId, setListItemPopupMenuId] = useState(null);
 
 
     const { state, setState } = useContext(UserContext);
@@ -329,15 +330,8 @@ const GeminiApi = () => {
     }
     return (
         <>
-            {isMobile && isSideBarOpen &&
-            <div className={'mt-2'} style={{display: 'flex', alignItems: "center", width: '100%'}}>
-                <IconButton onClick={() => updateIsSideBarOpen(!isSideBarOpen)}>
-                    <MenuOutlinedIcon/>
-                </IconButton>&nbsp;&nbsp;
-                <h2 className="title-mobile title" style={{fontSize: '2rem !important'}}>IAmAI</h2>
-            </div>}
             <ImageDialog imageInDialog={imageInDialog} setImageInDialog={setImageInDialog}/>
-            <div className="main-container">
+            <div className="main-container" onClick={() => setListItemPopupMenuId(null)}>
                 <div className="title-container" style={!isSideBarOpen ? {width: 0} : {width: '10%'}} >
                     <SideBar
                         textareaRef={textareaRef}
@@ -348,14 +342,19 @@ const GeminiApi = () => {
                         setConversations={setConversations}
                         selectedHistoryId={selectedHistoryId}
                         setSelectedHistoryId={setSelectedHistoryId}
-                        updateIsSideBarOpen={updateIsSideBarOpen}>
+                        updateIsSideBarOpen={updateIsSideBarOpen}
+                        listItemPopupMenuId={listItemPopupMenuId}
+                        setListItemPopupMenuId={setListItemPopupMenuId}>
                     </SideBar>
                 </div>
                 <div className="parent-container bg-[rgba(246,247,248,0.5)] dark:bg-[rgba(52,52,52)]"
-                     style={!isSideBarOpen ? {width: '100%'} : {width: '90%'}}>
+                     style={!isSideBarOpen ? {width: '100%'} : {width: '90%'}}
+                     onClick={() => {
+                       isMobile && isSideBarOpen && updateIsSideBarOpen(false);
+                }}>
                     {!isMobile && !isSideBarOpen && <>
                         <img src={iamaiLogo} alt="IAmAI"
-                             className={'w-[150px] h-[40px] x-[999] absolute top-[10px] left-[60px]'}/>
+                             className={'w-[150px] h-[40px] x-[999] absolute top-[7px] left-[35px]'}/>
                     </>}
                     <div id={"conversation-content"} className={`h-[75%] ${isMobile ? 'w-[99%]' : 'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
                         {conversations?.length > 0 ? conversations.map((convers, index) => (

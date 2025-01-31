@@ -53,7 +53,7 @@ const ThemeButton = () => {
             <img src={lightImg} alt={"Light"} width={'25px'} height={'25px'}
                  style={{zIndex: 100, opacity: isRight ? 1 : 0, marginLeft: "3px"}}/>
             <img src={darkModeImg} alt={'Dark'} width={'25px'} height={'25px'}
-                 style={{opacity: !isRight ? 1 : 0, marginLeft: "5px", filter: 'brightness(0.5)'}}/>
+                 style={{opacity: !isRight ? 1 : 0, filter: 'brightness(0.5)'}}/>
         </div>
     )
 }

@@ -10,6 +10,8 @@ import TaskAlt from "@mui/icons-material/TaskAlt";
 import {AppContext} from "../context/AppContext";
 import ThemeButton from "../content/ThemeButton";
 import {Helmet} from "react-helmet";
+import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 
 
 const SignUpAndSignIn = ({formType}) => {
@@ -24,6 +26,7 @@ const SignUpAndSignIn = ({formType}) => {
                                                                                 isAtleast1Lower: false, isAnyNumber: false, isValidPass: false});
     const showMessage = usePopupMessage(5000);
     const {isServerActive, isServerMsgVisible} = useContext(AppContext);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
     // useEffect(() => {
     //     const handleKeyDown = (e) => {
@@ -159,8 +162,8 @@ const SignUpAndSignIn = ({formType}) => {
                                     </div>
                                 }
                             </div>
-                            <div className="mt-2">
-                                <input id={'user-login-password'} value={userPassword} type={"password"}
+                            <div className="mt-2 relative">
+                                <input id={'user-login-password'} value={userPassword} type={isPasswordVisible ? "text" : "password"}
                                        name={"user-login-password"} placeholder={'Password'}
                                        className={'block w-full rounded-md border-0 py-1.5 px-1.5 text-gray-900 shadow-sm ring-1 ring-inset ' +
                                            'ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'}
@@ -168,6 +171,10 @@ const SignUpAndSignIn = ({formType}) => {
                                            setUserPassword(event.target.value)
                                            handlePasswordValidation(event.target.value)
                                        }}/>
+                                <div className={"absolute top-1.5 right-2 cursor-pointer"}
+                                      onClick={() => setIsPasswordVisible(!isPasswordVisible)}>
+                                    {isPasswordVisible ? <VisibilityOffOutlinedIcon/> : <RemoveRedEyeOutlinedIcon/>}
+                                </div>
                             </div>
                             {isSignUp &&
                             <div className={userPassword.length < 1 && 'hidden'}>
