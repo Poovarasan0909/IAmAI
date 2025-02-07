@@ -1,14 +1,18 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import userDefaultImage from "../css/9187604.png";
 import {useNavigate} from "react-router-dom";
 import ThemeButton from "./ThemeButton";
 import {isMobile} from "react-device-detect";
+import LogoutIcon from '@mui/icons-material/Logout';
+import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
+import {AppContext} from "../context/AppContext";
 
 const UserProfile = ({state, setState}) => {
     const navigate = useNavigate();
     const firstChar = state?.user?.username?.charAt(0).toUpperCase();
     const userName = firstChar + state?.user?.username?.substring(1);
     const [isUserMenuHide, setIsUserMenuHide] = useState(false);
+    const {isChatOpen, setIsChatOpen} = useContext(AppContext);
 
     const handleOnSignOut = () => {
         setState({ ...state, user: null});
@@ -68,11 +72,17 @@ const UserProfile = ({state, setState}) => {
                         <div>Theme</div>
                         <div className={"absolute right-px"}><ThemeButton/></div>
                     </div>}
-                    <div className="py-2">
-                            <span className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
+                    <div onClick={()=> setIsChatOpen(!isChatOpen)}>
+                          <span className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
+                            dark:text-gray-200 dark:hover:text-white cursor-pointer">
+                              <ChatOutlinedIcon/>  Message
+                          </span>
+                    </div>
+                    <div>
+                            <span className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
                             dark:text-gray-200 dark:hover:text-white cursor-pointer"
                                   onClick={() => handleOnSignOut()}>
-                                Sign out</span>
+                                <LogoutIcon/> Sign out</span>
                     </div>
                 </div>
             </>

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Test = require('../models/testModels');
 const users = require('../models/usersModel');
-const {createUser, createUserData, deleteUserDataById, deleteUserById, checkIsUserExit, getUserDataByUserId, storeIpData} = require('../managers/userManager');
+const {createUser, createUserData, deleteUserDataById, deleteUserById, checkIsUserExit, getUserDataByUserId, storeIpData, getAllPublicChatMessage} = require('../managers/userManager');
 const multer = require("multer");
 const fs = require("fs");
 const UserData = require('../models/userDataModel');
@@ -102,5 +102,13 @@ router.delete('/deleteAllUserData', async  (req, res) => {
         message: 'All records deleted successfully',
         deletedCount: result.deletedCount
     });
+})
+
+router.get('/fetchAllPublicChatMessage', async (req, res) => {
+    try {
+        res.status(200).send(await getAllPublicChatMessage());
+    } catch (error) {
+        res.status(400).send('Error : '+ error.message)
+    }
 })
 module.exports = router;

@@ -16,6 +16,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faImage, faXmark} from "@fortawesome/free-solid-svg-icons";
 import ImageDialog from "../common/ImageDialog";
 import ModelResponse from "./ModelResponse";
+import Chat from "./Chat";
 
 
 const GeminiApi = () => {
@@ -36,6 +37,7 @@ const GeminiApi = () => {
     const [userInput, setUserInput] = useState('');
     const [selectedHistoryId, setSelectedHistoryId] = useState(null);
     const [listItemPopupMenuId, setListItemPopupMenuId] = useState(null);
+    const {isChatOpen, setIsChatOpen} = useContext(AppContext);
 
 
     const { state, setState } = useContext(UserContext);
@@ -332,7 +334,7 @@ const GeminiApi = () => {
         <>
             <ImageDialog imageInDialog={imageInDialog} setImageInDialog={setImageInDialog}/>
             <div className="main-container" onClick={() => setListItemPopupMenuId(null)}>
-                <div className="title-container" style={!isSideBarOpen ? {width: 0} : {width: '10%'}} >
+                <div className="title-container" style={!isSideBarOpen ? {width: 0} : {width: '10%'}}>
                     <SideBar
                         textareaRef={textareaRef}
                         setLoading={setLoading}
@@ -347,97 +349,100 @@ const GeminiApi = () => {
                         setListItemPopupMenuId={setListItemPopupMenuId}>
                     </SideBar>
                 </div>
-                <div className="parent-container bg-[rgba(246,247,248,0.5)] dark:bg-[rgba(52,52,52)]"
-                     style={!isSideBarOpen ? {width: '100%'} : {width: '90%'}}
-                     onClick={() => {
-                       isMobile && isSideBarOpen && updateIsSideBarOpen(false);
-                }}>
-                    {!isMobile && !isSideBarOpen && <>
-                        <img src={iamaiLogo} alt="IAmAI"
-                             className={'w-[150px] h-[40px] x-[999] absolute top-[7px] left-[35px]'}/>
-                    </>}
-                    <div id={"conversation-content"} className={`h-[75%] ${isMobile ? 'w-[99%]' : 'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
-                        {conversations?.length > 0 ? conversations.map((convers, index) => (
-                                <div>
-                                    {convers.role === 'user' &&
-                                        <div key={index}
-                                             className={`px-2 ${convers.length > 0 && 'py-1'} dark:text-white bg-[lavender] dark:bg-[#757575f7] w-fit rounded-t-md mb-2 ` +
-                                                 'whitespace-pre-wrap max-w-[100%] max-h-[60%] min-w-[10%] overflow-y-auto'}>
-                                            {convers.parts.text}
-                                            {convers.parts.image &&
-                                                <img
-                                                    src={typeof convers.parts.image === 'string' ? `${convers.parts.image}` : URL.createObjectURL(convers.parts.image)}
-                                                    className={'rounded-2xl mt-3 max-h-[14rem]'}
-                                                    onClick={() => {
-                                                        setImageInDialog(convers.parts.image);
-                                                    }} alt={'Prompt Image'}/>}
-                                        </div>
-                                    }
-                                    {convers.role === 'model' &&
-                                        <div className={"dark:text-white"}>
-                                            <ModelResponse response={convers.parts?.text} key={index}/>
-                                            <hr className={'dark:text-sky-100 text-[#757575f7] mt-0.5'}/>
-                                        </div>
-                                    }
+                {!isChatOpen ? <div className="parent-container bg-[rgba(246,247,248,0.5)] dark:bg-[rgba(52,52,52)]"
+                                    style={!isSideBarOpen ? {width: '100%'} : {width: '90%'}}
+                                    onClick={() => {
+                                        isMobile && isSideBarOpen && updateIsSideBarOpen(false);
+                                    }}>
+                        {!isMobile && !isSideBarOpen && <>
+                            <img src={iamaiLogo} alt="IAmAI"
+                                 className={'w-[150px] h-[40px] x-[999] absolute top-[7px] left-[35px]'}/>
+                        </>}
+                        <div id={"conversation-content"}
+                             className={`h-[75%] ${isMobile ? 'w-[99%]' : 'w-[60%]'} relative bottom-4 border-0 overflow-auto px-2`}>
+                            {conversations?.length > 0 ? conversations.map((convers, index) => (
+                                    <div>
+                                        {convers.role === 'user' &&
+                                            <div key={index}
+                                                 className={`px-2 ${convers.length > 0 && 'py-1'} dark:text-white bg-[lavender] dark:bg-[#757575f7] w-fit rounded-t-md mb-2 ` +
+                                                     'whitespace-pre-wrap max-w-[100%] max-h-[60%] min-w-[10%] overflow-y-auto'}>
+                                                {convers.parts.text}
+                                                {convers.parts.image &&
+                                                    <img
+                                                        src={typeof convers.parts.image === 'string' ? `${convers.parts.image}` : URL.createObjectURL(convers.parts.image)}
+                                                        className={'rounded-2xl mt-3 max-h-[14rem]'}
+                                                        onClick={() => {
+                                                            setImageInDialog(convers.parts.image);
+                                                        }} alt={'Prompt Image'}/>}
+                                            </div>
+                                        }
+                                        {convers.role === 'model' &&
+                                            <div className={"dark:text-white"}>
+                                                <ModelResponse response={convers.parts?.text} key={index}/>
+                                                <hr className={'dark:text-sky-100 text-[#757575f7] mt-0.5'}/>
+                                            </div>
+                                        }
+                                    </div>
+                                )) :
+                                <div style={{position: 'relative'}}
+                                     className={`user-select-none flex items-center justify-center ${isMobile ? 'top-[110px]' : ''}`}>
+                                    <img className="robot-image user-select-none"
+                                         src={robot} style={{height: '25rem'}}
+                                         onDoubleClickCapture={(e) => e.preventDefault()}
+                                         alt={"IAMAI"}/>
                                 </div>
-                            )) :
-                            <div style={{position: 'relative'}}
-                                 className={`user-select-none flex items-center justify-center ${isMobile ? 'top-[110px]' : ''}`}>
-                                <img className="robot-image user-select-none"
-                                     src={robot} style={{height: '25rem'}}
-                                     onDoubleClickCapture={(e) => e.preventDefault()}
-                                     alt={"IAMAI"}/>
-                            </div>
-                        }
-                        {loading &&
-                            <div className={'flex justify-center items-center h-[50vh]'} onLoad={() => {
-                                const conversationContent = document.getElementById("conversation-content");
-                                conversationContent.scrollTop = conversationContent.scrollHeight;
-                            }}>
-                                <img alt={"Loading..."} style={{width: '10%'}} src={spinner}/>
-                                <span className={'dark:text-white'}>{responseStatus}</span>
-                            </div>}
-                    </div>
-                    <input type="file"
-                           ref={imageInputRef}
-                           accept={"image/*"}
-                           className={'hidden'}
-                           onChange={(e) => {
-                               setFile(e.target.files[0]);
-                               if(e.target.files[0]) {
-                                   const reader = new FileReader();
-                                   reader.readAsDataURL(e.target.files[0]);
-                                   reader.onload = (e) => {
-                                       setBase64Image(e.target.result);
-                                       base64Image = e.target.result;
-                                   };
-                               }
-                           }}/>
-
-                    <div className="input-portion">
-                        <div className={'flex justify-center dark:text-white'}>
-                            {isServerMsgVisible &&
-                                (!isServerActive ?
-                                    <>
-                                        <CircularProgress style={{width: '20px', height: '20px'}} color="inherit"/>
-                                        <pre className={'px-2'}>server starting, please wait...</pre>
-                                    </> :
-                                    <> <TaskAlt style={{width: '20px', height: '20px'}} color={'success'}/>
-                                        <pre>server started.</pre>
-                                    </>)
                             }
+                            {loading &&
+                                <div className={'flex justify-center items-center h-[50vh]'} onLoad={() => {
+                                    const conversationContent = document.getElementById("conversation-content");
+                                    conversationContent.scrollTop = conversationContent.scrollHeight;
+                                }}>
+                                    <img alt={"Loading..."} style={{width: '10%'}} src={spinner}/>
+                                    <span className={'dark:text-white'}>{responseStatus}</span>
+                                </div>}
                         </div>
-                        {file && <div className={'image-inside-input'}>
-                            <div className={'inline-flex'}>
-                                <img className={'ring-2 ring-blue-500 hover:border-2 cursor-pointer rounded'}
-                                     width={"60px"}
-                                     height={"60px"} src={URL.createObjectURL(file)}
-                                     alt={"Image"} onClick={() => setImageInDialog(file)}/>
-                                <div className={'flex px-[4px] cancel-img-input '} onClick={() => setFile(null)}>
-                                    <FontAwesomeIcon className={'cursor-pointer dark:text-white rounded-4 border-2 border-slate-900'} icon={faXmark}/></div>
+                        <input type="file"
+                               ref={imageInputRef}
+                               accept={"image/*"}
+                               className={'hidden'}
+                               onChange={(e) => {
+                                   setFile(e.target.files[0]);
+                                   if (e.target.files[0]) {
+                                       const reader = new FileReader();
+                                       reader.readAsDataURL(e.target.files[0]);
+                                       reader.onload = (e) => {
+                                           setBase64Image(e.target.result);
+                                           base64Image = e.target.result;
+                                       };
+                                   }
+                               }}/>
+
+                        <div className="input-portion">
+                            <div className={'flex justify-center dark:text-white'}>
+                                {isServerMsgVisible &&
+                                    (!isServerActive ?
+                                        <>
+                                            <CircularProgress style={{width: '20px', height: '20px'}} color="inherit"/>
+                                            <pre className={'px-2'}>server starting, please wait...</pre>
+                                        </> :
+                                        <> <TaskAlt style={{width: '20px', height: '20px'}} color={'success'}/>
+                                            <pre>server started.</pre>
+                                        </>)
+                                }
                             </div>
-                        </div>}
-                        <div className="textarea-wrapper">
+                            {file && <div className={'image-inside-input'}>
+                                <div className={'inline-flex'}>
+                                    <img className={'ring-2 ring-blue-500 hover:border-2 cursor-pointer rounded'}
+                                         width={"60px"}
+                                         height={"60px"} src={URL.createObjectURL(file)}
+                                         alt={"Image"} onClick={() => setImageInDialog(file)}/>
+                                    <div className={'flex px-[4px] cancel-img-input '} onClick={() => setFile(null)}>
+                                        <FontAwesomeIcon
+                                            className={'cursor-pointer dark:text-white rounded-4 border-2 border-slate-900'}
+                                            icon={faXmark}/></div>
+                                </div>
+                            </div>}
+                            <div className="textarea-wrapper">
                             <textarea
                                 ref={textareaRef}
                                 className={'dark:text-white'}
@@ -448,36 +453,40 @@ const GeminiApi = () => {
                                 spellCheck={false}
                                 disabled={!isServerActive}
                                 placeholder="Ask what you want to know!"
-                                onPaste={(e)=> handleOnPast(e) }
-                                onDrop={(e)=> handleOnDrag(e)}
+                                onPaste={(e) => handleOnPast(e)}
+                                onDrop={(e) => handleOnDrag(e)}
                                 onChange={(e) => setUserInput(e.target.value)}
                             />
-                            <button
-                                className="sent_button"
-                                disabled={!isServerActive}
-                                title={"Send"}
-                                onClick={() => {
-                                    if (userInput.length > 0 || file) {
-                                        setChatWithImage();
-                                        getResponseFromAI(userInput);
-                                        document.getElementById("prompt_inputs").value = '';
-                                    }
-                                }}
-                            >
-                                <SendIcon style={{width: "35px", height: "35px"}}
-                                          className={'text-[#174AE4] dark:text-[#67e8f9]'}/>
-                            </button>
-                            <FontAwesomeIcon className={'absolute left-2 bottom-3 dark:text-white cursor-pointer'}
-                                             icon={faImage}
-                                             onClick={() => handleOnInputImageClick()}
-                            />
+                                <button
+                                    className="sent_button"
+                                    disabled={!isServerActive}
+                                    title={"Send"}
+                                    onClick={() => {
+                                        if (userInput.length > 0 || file) {
+                                            setChatWithImage();
+                                            getResponseFromAI(userInput);
+                                            document.getElementById("prompt_inputs").value = '';
+                                        }
+                                    }}
+                                >
+                                    <SendIcon style={{width: "35px", height: "35px"}}
+                                              className={'text-[#174AE4] dark:text-[#67e8f9]'}/>
+                                </button>
+                                <FontAwesomeIcon className={'absolute left-2 bottom-3 dark:text-white cursor-pointer'}
+                                                 icon={faImage}
+                                                 onClick={() => handleOnInputImageClick()}
+                                />
+                            </div>
                         </div>
+                        <UserProfile state={state} setState={setState}/>
                     </div>
-                    <UserProfile state={state} setState={setState}/>
-                </div>
+                    :
+                    <Chat isSideBarOpen={isSideBarOpen}
+                          textareaRef={textareaRef}
+                          textareaHeight={textareaHeight}
+                          handleOnKeyUp={handleOnKeyUp}/>}
             </div>
-        </>
-    );
-};
+            </>
+            )};
 
-export default GeminiApi;
+            export default GeminiApi;

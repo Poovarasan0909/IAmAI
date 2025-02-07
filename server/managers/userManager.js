@@ -3,6 +3,7 @@ const UserData = require('../models/userDataModel');
 const UserGeolocation = require('../models/userGeolocation');
 const mongoose = require('mongoose');
 const {uploadFile, deleteImage} = require("../service/cloudinaryAPIs");
+const ChatMessage = require('../models/chatMessageModel');
 const axios = require("axios");
 
 
@@ -167,10 +168,18 @@ async function convertImageToLinkInChatHistory(body) {
         console.error("Error processing chat history:", error);
     }
 }
+async function getAllPublicChatMessage() {
+    try {
+        return await ChatMessage.find().sort({ timeStamp: 1 }).limit(50);
+    } catch (error) {
+        console.error('Error while fetching public chat message: ', error.message);
+    }
+}
 module.exports = {createUser,
                   createUserData,
                   deleteUserById,
                   deleteUserDataById,
                    getUserDataByUserId,
                   checkIsUserExit,
+                  getAllPublicChatMessage,
                   storeIpData};

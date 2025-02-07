@@ -3,6 +3,9 @@ const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 4000;
 const mongoose = require('mongoose');
+const { createServer } = require('node:http');
+const { Server } = require('socket.io');
+const ChatMessage = require('./models/chatMessageModel');
 
 const testRoutes = require('./routes/testRoutes');
 const geminiApiRoutes = require('./routes/GeminiApiRoutes');
@@ -23,6 +26,38 @@ db.once('open', () => {
     console.log('Connected to MongoDB');
 });
 
+const server = createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ["GET", "POST"],
+    },
+});
+
+io.on('connection', async (socket) => {
+    const chatHistory = await ChatMessage.find().sort({ timeStamp: 1 }).limit(50);
+    socket.emit("chat_history", chatHistory);
+
+    socket.on("send_message", async (data) => {
+        console.log("Message Received: ", data);
+
+        const chatMessage = new ChatMessage({
+            userId: data.userId,
+            userName: data.userName,
+            message: data.message,
+            color: data.color,
+        });
+
+        await chatMessage.save();
+
+        io.emit("receive_message", chatMessage);
+    })
+    socket.on("disconnect", () => {
+        console.log("User Disconnected:", socket.id);
+    });
+});
+
+
 app.use('/', testRoutes);
 app.use('/', geminiApiRoutes);
 
@@ -30,6 +65,6 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server running at ${port}`);
 });

@@ -332,4 +332,29 @@ p {
 .dark #theme-button {
     background-color: #9ca3af;
 }
-
+.animate-slide-in-receive {
+    animation: slide-in-receive 0.5s ease-in-out;
+}
+@keyframes slide-in-receive {
+    from {
+        transform: translateX(70%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+.animate-slide-in-sent {
+    animation: slide-in-sent 0.5s ease-in-out;
+}
+@keyframes slide-in-sent {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

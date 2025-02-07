@@ -136,7 +136,7 @@ const SideBar = ({
                 aria-label="open drawer"
                 onClick={() => updateIsSideBarOpen(!isSideBarOpen)}
                 edge="start"
-                className={'p-0 dark:text-amber-50'}
+                className={'p-0 dark:text-amber-50 z-[9999]'}
                 sx={[
                     {
                         mr: 1, ml: 1, mb: 1
@@ -253,7 +253,7 @@ const SideBar = ({
                     </Slide>
                 </Drawer>}
             {isSideBarOpen &&
-                <IconButton className={'dark:text-white'}
+                <IconButton className={'dark:text-white z-[9999]'}
                             onClick={() => updateIsSideBarOpen(!isSideBarOpen)}>
                     <ArrowBackIosIcon/>
                 </IconButton>}

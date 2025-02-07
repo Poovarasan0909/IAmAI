@@ -9,6 +9,7 @@ export const AppProvider = ({ children }) => {
     const [isServerMsgVisible, setIsServerMsgVisible] = useState(true);
     const [themeMode, setThemeMode] = useState(themeFromLocalStore ? themeFromLocalStore : 'light');
     const [geolocation, setGeolocation] = useState('');
+    const [isChatOpen, setIsChatOpen] = useState(false);
 
     useEffect(() => {
         if(isServerActive) {
@@ -25,6 +26,8 @@ export const AppProvider = ({ children }) => {
                                      themeMode,
                                      setThemeMode,
                                      geolocation,
+                                     isChatOpen,
+                                     setIsChatOpen,
                                      setGeolocation}}>
             {children}
         </AppContext.Provider>
