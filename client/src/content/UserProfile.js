@@ -72,7 +72,7 @@ const UserProfile = ({state, setState}) => {
                         <div>Theme</div>
                         <div className={"absolute right-px"}><ThemeButton/></div>
                     </div>}
-                    <div onClick={()=> setIsChatOpen(!isChatOpen)}>
+                    <div onClick={()=> navigate('/IAmAI/chat')}>
                           <span className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
                             dark:text-gray-200 dark:hover:text-white cursor-pointer">
                               <ChatOutlinedIcon/>  Message

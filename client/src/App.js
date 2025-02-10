@@ -13,6 +13,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import axios from "axios";
 import {UserContext} from "./context/UserContext";
+import Chat from "./content/Chat";
 
 function App() {
     let {isServerActive, setIsServerActive, setGeolocation} = useContext(AppContext);
@@ -72,6 +73,7 @@ function App() {
                       <Route path="/IAmAI" element={<Gemini_api/>}/>
                       <Route path="/IAmAI/signin" element={<SignUpAndSignIn formType='signin'/>}/>
                       <Route path="/IAmAI/signup" element={<SignUpAndSignIn formType='signup'/>}/>
+                      <Route path="/IAmAI/chat" element={<Chat/>}/>
                       <Route path="*" element={<div className={'center'}><h2><a href={"/IAmAI"}>404 PAGE NOT FOUND</a> </h2></div>}/>
                   </Routes>
               </Router>

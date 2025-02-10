@@ -15,17 +15,6 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// MongoDB connection
-const uri = 'mongodb+srv://poovarasan_0909:poov09092002@gemini-api.ka3hnmn.mongodb.net/?retryWrites=true&w=majority&appName=gemini-api';
-mongoose.connect(uri).then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('Could not connect to MongoDB...', err));
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', () => {
-    console.log('Connected to MongoDB');
-});
-
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
@@ -34,37 +23,52 @@ const io = new Server(server, {
     },
 });
 
-io.on('connection', async (socket) => {
-    const chatHistory = await ChatMessage.find().sort({ timeStamp: 1 }).limit(50);
-    socket.emit("chat_history", chatHistory);
+const setUpSocket = () => {
+    io.on('connection', async (socket) => {
+        const chatHistory = await ChatMessage.find().sort({ timeStamp: 1 }).limit(50);
+        socket.emit("chat_history", chatHistory);
 
-    socket.on("send_message", async (data) => {
-        console.log("Message Received: ", data);
+        socket.on("send_message", async (data) => {
 
-        const chatMessage = new ChatMessage({
-            userId: data.userId,
-            userName: data.userName,
-            message: data.message,
-            color: data.color,
-        });
+            const chatMessage = new ChatMessage({
+                userId: data.userId,
+                userName: data.userName,
+                message: data.message,
+                color: data.color,
+                timeStamp: Date.now(),
+            });
 
-        await chatMessage.save();
+            await chatMessage.save();
 
-        io.emit("receive_message", chatMessage);
-    })
-    socket.on("disconnect", () => {
-        console.log("User Disconnected:", socket.id);
+            io.emit("receive_message", chatMessage);
+        })
+        // socket.on("disconnect", () => {
+        //     console.log("User Disconnected:", socket.id);
+        // });
     });
-});
+}
 
+// MongoDB connection
+const uri = 'mongodb+srv://poovarasan_0909:poov09092002@gemini-api.ka3hnmn.mongodb.net/?retryWrites=true&w=majority&appName=gemini-api';
+mongoose.connect(uri).then(() => {
+    console.log('Connected to MongoDB')
+    setUpSocket();
+    server.listen(port, () => {
+        console.log(`Server running at ${port}`);
+    });
+}).catch(err => {
+    console.error('Could not connect to MongoDB...', err);
+    process.exit(1);
+});
+// const db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'connection error:'));
+// db.once('open', () => {
+//     console.log('Connected to MongoDB');
+// });
 
 app.use('/', testRoutes);
 app.use('/', geminiApiRoutes);
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
-});
-
-server.listen(port, () => {
-    console.log(`Server running at ${port}`);
 });
