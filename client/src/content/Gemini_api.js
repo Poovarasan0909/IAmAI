@@ -235,12 +235,12 @@ const GeminiApi = () => {
         const currentLineCount = textareaRef.current.value?.split('\n').length;
         const input = textareaRef.current.value
         if (input.length === 0) {
-            adjustTextareaHeight(null);
+            adjustTextareaHeight(null, setTextareaHeight, "prompt_inputs");
         } else if (event.key === 'Enter' && event.shiftKey) {
-            adjustTextareaHeight(textareaRef.current.scrollHeight);
+            adjustTextareaHeight(textareaRef.current.scrollHeight, setTextareaHeight, "prompt_inputs");
         } else if (event.key === 'Backspace') {
             if (currentLineCount < previousLineCount) {
-                adjustTextareaHeight(textareaRef.current.scrollHeight >= 72 ? textareaRef.current.scrollHeight : (textareaRef.current.scrollHeight - 22));
+                adjustTextareaHeight(textareaRef.current.scrollHeight >= 72 ? textareaRef.current.scrollHeight : (textareaRef.current.scrollHeight - 22), setTextareaHeight, "prompt_inputs");
             }
             setPreviousLineCount(currentLineCount);
         }
