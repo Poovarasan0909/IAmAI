@@ -1,19 +1,19 @@
 {
   "files": {
-    "main.css": "/IAmAI/static/css/main.264a59b6.css",
-    "main.js": "/IAmAI/static/js/main.34b68665.js",
+    "main.css": "/IAmAI/static/css/main.f194e32c.css",
+    "main.js": "/IAmAI/static/js/main.4e5e4306.js",
     "static/js/787.8151e39d.chunk.js": "/IAmAI/static/js/787.8151e39d.chunk.js",
     "static/media/ro.webp": "/IAmAI/static/media/ro.c0be77f0359c6b64a794.webp",
     "static/media/IAMAI-19-09-2024.png": "/IAmAI/static/media/IAMAI-19-09-2024.150b07e471353702bcd0.png",
     "static/media/9187604.png": "/IAmAI/static/media/9187604.9280d3f109400d6d323b.png",
     "static/media/spinner.svg": "/IAmAI/static/media/spinner.722835cf9b3aa71d3842f0d115e9ff56.svg",
     "index.html": "/IAmAI/index.html",
-    "main.264a59b6.css.map": "/IAmAI/static/css/main.264a59b6.css.map",
-    "main.34b68665.js.map": "/IAmAI/static/js/main.34b68665.js.map",
+    "main.f194e32c.css.map": "/IAmAI/static/css/main.f194e32c.css.map",
+    "main.4e5e4306.js.map": "/IAmAI/static/js/main.4e5e4306.js.map",
     "787.8151e39d.chunk.js.map": "/IAmAI/static/js/787.8151e39d.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.264a59b6.css",
-    "static/js/main.34b68665.js"
+    "static/css/main.f194e32c.css",
+    "static/js/main.4e5e4306.js"
   ]
 }
