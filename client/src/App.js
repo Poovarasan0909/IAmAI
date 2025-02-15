@@ -56,15 +56,11 @@ function App() {
     // },[isServerActive])
 
     return (
-      <div className={"container"}>
+      <div style={{height: '100vh'}}>
           <Helmet>
               <meta charSet="utf-8" />
-              <title>IAmAI</title>
+              <title>{isWindowActive ? "IAmAI" : "Come Back 🙁"}</title>
           </Helmet>
-          {!isWindowActive && <Helmet>
-              <title>Come Back 🙁</title>
-          </Helmet> }
-          <div style={{position: 'absolute', top: 0, right: 0, width: '100%', height: '100%'}}>
               <div id={"top-level-popup-message"}></div>
               <Router>
                   <Routes>
@@ -74,10 +70,12 @@ function App() {
                       <Route path="/IAmAI/signin" element={<SignUpAndSignIn formType='signin'/>}/>
                       <Route path="/IAmAI/signup" element={<SignUpAndSignIn formType='signup'/>}/>
                       <Route path="/IAmAI/chat" element={<Chat/>}/>
-                      <Route path="*" element={<div className={'center'}><h2><a href={"/IAmAI"}>404 PAGE NOT FOUND</a> </h2></div>}/>
+                      <Route path="*" element={
+                          <div className={'center'}>
+                            <h2><a href={"/IAmAI"}>404 PAGE NOT FOUND</a> </h2>
+                          </div>}/>
                   </Routes>
               </Router>
-          </div>
       </div>
     );
 }

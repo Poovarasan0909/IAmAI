@@ -38,6 +38,8 @@ async function createUserData(body) {
               await User.findByIdAndUpdate(userId, {
                   $push: { userdatas: userData._id }
               });
+              console.log('User Data Created.');
+              return { _id: userData._id, ...userData.toObject()};
           } else {
              const _id = new mongoose.Types.ObjectId(body.id);
               userData = await UserData.findByIdAndUpdate(
@@ -48,9 +50,9 @@ async function createUserData(body) {
                   },
                   {new: true}
               );
+              console.log('User Data Updated.');
+              return userData
           }
-          console.log('User Data Updated.');
-          return userData
       } catch(error) {
           console.error('Error fetching user with data:', error);
       }

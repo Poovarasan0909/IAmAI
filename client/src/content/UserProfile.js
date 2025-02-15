@@ -12,7 +12,7 @@ const UserProfile = ({state, setState}) => {
     const firstChar = state?.user?.username?.charAt(0).toUpperCase();
     const userName = firstChar + state?.user?.username?.substring(1);
     const [isUserMenuHide, setIsUserMenuHide] = useState(false);
-    const {isChatOpen, setIsChatOpen} = useContext(AppContext);
+    const {themeMode} = useContext(AppContext);
 
     const handleOnSignOut = () => {
         setState({ ...state, user: null});
@@ -61,8 +61,8 @@ const UserProfile = ({state, setState}) => {
                 </div>
 
                 <div id="dropdownAvatarName"
-                     className={`z-10 ${!isUserMenuHide && 'hidden'} divide-y divide-gray-100 rounded-lg 
-                         shadow w-44 dark:bg-gray-700 dark:divide-gray-600 absolute top-10 right-0 m-3`}>
+                     className={`z-[9999] ${!isUserMenuHide && 'hidden'} divide-y divide-gray-100 rounded-lg 
+                         shadow w-44 dark:divide-gray-600 absolute top-10 right-0 m-3 ${themeMode === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
                     <div className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                         <div className="font-medium "> {userName}</div>
                         <div className="truncate">{state.user.email}</div>

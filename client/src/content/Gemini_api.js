@@ -119,14 +119,17 @@ const GeminiApi = () => {
         const userRole = conversation.filter((val) => val.role === 'user');
         const lable = userRole.length > 0 ? userRole[userRole.length-1].parts.text : '';
         postRequest('/createUserData', {id: selectedHistoryId, userId: userId, historyLabel: lable, chatHistory: conversation})
-            .then((res) => {
+            .then((createdDataResponse) => {
                 if (userId) {
                     getRequest(`getUserDataById/${userId}`).then((res) => {
-                        setHistoryList(res.data?.reverse());
+                        setHistoryList(res.data);
                         const historyIdToFind = selectedHistoryId
+                        if(createdDataResponse.data._id)
+                          setSelectedHistoryId(createdDataResponse.data._id)
                         const selectedHistory = res.data.filter((val) => val._id === historyIdToFind)[0];
-                        if(selectedHistory)
-                          setConversations(selectedHistory?.chatHistory);
+                        if(selectedHistory) {
+                            setConversations(selectedHistory?.chatHistory);
+                        }
                     })
                 }
             })

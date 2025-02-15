@@ -142,6 +142,7 @@ p {
     align-content: center;
     justify-content: center;
     display: flex;
+    text-align: center;
 }
 
 /* Media query for mobile devices */
@@ -357,4 +358,11 @@ p {
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+.chat-content {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
 }

@@ -6,6 +6,8 @@ const {createUser, createUserData, deleteUserDataById, deleteUserById, checkIsUs
 const multer = require("multer");
 const fs = require("fs");
 const UserData = require('../models/userDataModel');
+const ChatMessage = require('../models/chatMessageModel')
+const PrivateChatMessage = require('../models/privateMessageModel')
 
 router.get('/createModule', async (req, res) => {
     try{
@@ -110,5 +112,32 @@ router.get('/fetchAllPublicChatMessage', async (req, res) => {
     } catch (error) {
         res.status(400).send('Error : '+ error.message)
     }
+})
+
+router.post('/fetchPrivateChatMessages', async (req, res) => {
+    try {
+        res.status(200).send(await PrivateChatMessage.find({
+            $or: [
+                {senderId: req.body.senderId, receiverId: req.body.receiverId},
+                {senderId: req.body.receiverId, receiverId: req.body.senderId}
+      ]}).sort({ timeStamp: 1 }));
+    } catch (error) {
+        res.status(400).send('Error : '+ error.message)
+    }
+})
+
+router.delete('/deleteClearChatMessages', async (req, res) => {
+    const result = await ChatMessage.deleteMany({})
+    res.status(200).json({
+        message: 'All records deleted successfully',
+        deletedCount: result.deletedCount
+    });
+})
+router.delete('/deleteAllPrivateChatMessages', async (req, res) => {
+    const result = await PrivateChatMessage.deleteMany({});
+    res.status(200).json({
+        message: 'All records deleted successfully',
+        deletedCount: result.deletedCount
+    })
 })
 module.exports = router;

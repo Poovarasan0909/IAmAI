@@ -32,7 +32,7 @@ export function calculateLines(textarea) {
 }
 
 export const adjustTextareaHeight = (scrollHeight, setTextareaHeight, element_Id) => {
-    setTextareaHeight('4.5rem');
+    setTextareaHeight('4rem');
     const prompt_inputs = document.getElementById(element_Id);
     if (scrollHeight) {
         setTextareaHeight(`${scrollHeight}px`);
