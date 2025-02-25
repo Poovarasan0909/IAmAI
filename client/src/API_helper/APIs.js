@@ -1,7 +1,7 @@
 import axios from "axios";
 import packageJson from '../../package.json';
 
-const baseURL = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.1.56:4000' :  packageJson.baseURL;
+const baseURL = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.29.57:4000' :  packageJson.baseURL;
 
 export const postRequest = async (url,data) => {
     const path = url.replace(/^\//, '');
@@ -9,7 +9,7 @@ export const postRequest = async (url,data) => {
         return await axios.post(`${baseURL}/${path}`, data);
     } catch (error) {
         console.error("Error during post request:", error.message);
-        return { error: error.message };
+        throw new Error(error.response?.data?.message || "Network error");
     }
 }
 

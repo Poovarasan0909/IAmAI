@@ -10,6 +10,7 @@ const PrivateMessage = require('./models/privateMessageModel');
 
 const testRoutes = require('./routes/testRoutes');
 const geminiApiRoutes = require('./routes/GeminiApiRoutes');
+const chatRoutes = require('./routes/chatRoutes')
 
 // Middleware
 app.use(cors());
@@ -90,6 +91,10 @@ const setUpSocket = () => {
                         if(socketId)
                            io.to(socketId).emit("receive_private_message", findAllMessages);
                     })
+                    findSocketIdsByUserId(data.senderId).forEach(socketId => {
+                        if(socketId)
+                            io.to(socketId).emit("receive_private_message", findAllMessages);
+                    })
                 }
             }
         });
@@ -130,6 +135,7 @@ mongoose.connection.on('error', (err) => {
 
 app.use('/', testRoutes);
 app.use('/', geminiApiRoutes);
+app.use('/', chatRoutes);
 
 app.get('/', (req, res) => {
     res.send('Hello World!');

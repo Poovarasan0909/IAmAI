@@ -145,16 +145,15 @@ const GeminiApi = () => {
 
 
     const getResponseFromAI = async (prompt) => {
-        let inst = "In this instruction, I tell you how I want the response. " +
-            "`Inside the `chatHistory` There is a list of Objects In that Each Object entry has a 'role' field ('user' or 'model') and a 'parts' field with a 'text' property" +
-            "You should read the user last entry and generate a continuation of the conversation based on the latest 'user' entry " +
-            "you should respond as a 'model' to the last 'users' message. you should generate the text value under the parts only, not generate entire object." +
+        let inst = "I'm giving you a conversation history (`chatHistory`), which is a list of objects. Each object has a `role` ('user' or 'model') and `parts`, which contains a `text` property. " +
+            "I want you to continue the conversation based on the *last* 'user' entry in the `chatHistory`. " +
+            "you should respond as a 'model' to the last 'users' message. you should generate the text value under the parts only, not generate entire object. " +
             "Respond in a friendly and casual tone, using emojis where appropriate. You should Read the entire conversation before generate the response. " +
-            "Generate a short and clear continuation response and Avoid unnecessary details."
+            "Generate a clear continuation response and explain to the points. you may provide an example for better understanding. "
 
         const nameRegex = /what.*your.*name|who.*are.*you|can.*say.*your.*name|tell.*your.*name/i;
         if (nameRegex.test(prompt)) {
-            inst += 'If anybody asks your name, tell them "My name is Poovarasan" ';
+            inst += ' If anybody asks your name, tell them "My name is Poovarasan" ';
         }
 
         setLoading(true);

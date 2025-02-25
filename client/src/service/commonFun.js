@@ -43,3 +43,7 @@ export const adjustTextareaHeight = (scrollHeight, setTextareaHeight, element_Id
             prompt_inputs.style.borderRadius = '10px'
     }
 };
+
+export const getThemeMode = () => {
+    return localStorage.getItem("theme") || null;
+}

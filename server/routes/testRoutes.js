@@ -140,4 +140,5 @@ router.delete('/deleteAllPrivateChatMessages', async (req, res) => {
         deletedCount: result.deletedCount
     })
 })
+
 module.exports = router;

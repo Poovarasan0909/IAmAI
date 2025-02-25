@@ -14,6 +14,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import axios from "axios";
 import {UserContext} from "./context/UserContext";
 import Chat from "./content/Chat";
+import ForgotPassword from "./content/ForgotPassword";
 
 function App() {
     let {isServerActive, setIsServerActive, setGeolocation} = useContext(AppContext);
@@ -69,6 +70,7 @@ function App() {
                       <Route path="/IAmAI" element={<Gemini_api/>}/>
                       <Route path="/IAmAI/signin" element={<SignUpAndSignIn formType='signin'/>}/>
                       <Route path="/IAmAI/signup" element={<SignUpAndSignIn formType='signup'/>}/>
+                      <Route path="/IAmAI/reset_password" element={<ForgotPassword/>}/>
                       <Route path="/IAmAI/chat" element={<Chat/>}/>
                       <Route path="*" element={
                           <div className={'center'}>

@@ -6,6 +6,7 @@ import {isMobile} from "react-device-detect";
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import {AppContext} from "../context/AppContext";
+import CustomMenu from "../common/CustomMenu";
 
 const UserProfile = ({state, setState}) => {
     const navigate = useNavigate();
@@ -43,10 +44,7 @@ const UserProfile = ({state, setState}) => {
                     {!isMobile && <ThemeButton/>}
                     <button id="dropdownAvatarNameButton" data-dropdown-toggle="dropdownAvatarName"
                             className="flex items-center text-sm pe-1 font-medium text-gray-900 rounded-full hover:text-blue-600 dark:hover:text-blue-500 md:me-0 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-white"
-                            type="button" onClick={() => setIsUserMenuHide(!isUserMenuHide)}
-                            onBlur={() => setTimeout(() => {
-                                setIsUserMenuHide(false)
-                            }, 300)}>
+                            type="button" onClick={() => setIsUserMenuHide(!isUserMenuHide)}>
                         <span className="sr-only">Open user menu</span>
                         {/* eslint-disable-next-line jsx-a11y/img-redundant-alt */}
                         <img className="w-8 h-8 me-2 rounded-full"
@@ -60,31 +58,33 @@ const UserProfile = ({state, setState}) => {
                     </button>
                 </div>
 
-                <div id="dropdownAvatarName"
-                     className={`z-[9999] ${!isUserMenuHide && 'hidden'} divide-y divide-gray-100 rounded-lg 
-                         shadow w-44 dark:divide-gray-600 absolute top-10 right-0 m-3 ${themeMode === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
-                    <div className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                        <div className="font-medium "> {userName}</div>
-                        <div className="truncate">{state.user.email}</div>
-                    </div>
+                <CustomMenu isMenuOpen={isUserMenuHide} setIsMenuOpen={setIsUserMenuHide} className={`absolute top-10 right-0 m-3`}>
+                    <CustomMenu.Item>
+                        <div className="px-2 py-1 text-sm text-gray-900 dark:text-white">
+                            <div className="font-medium "> {userName}</div>
+                            <div className="truncate">{state.user.email}</div>
+                        </div>
+                    </CustomMenu.Item>
                     {isMobile &&
-                    <div className={"px-4 py-2 text-sm text-gray-900 dark:text-white flex relative"}>
-                        <div>Theme</div>
-                        <div className={"absolute right-px"}><ThemeButton/></div>
-                    </div>}
-                    <div onClick={()=> navigate('/IAmAI/chat')}>
-                          <span className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
+                        <CustomMenu.Item>
+                            <div className={"px-2 py-1 text-sm text-gray-900 dark:text-white flex relative"}>
+                                <div>Theme</div>
+                                <div className={"absolute right-px"}><ThemeButton/></div>
+                            </div>
+                        </CustomMenu.Item>}
+                    <CustomMenu.Item onClick={()=> navigate('/IAmAI/chat')}>
+                          <span className="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
                             dark:text-gray-200 dark:hover:text-white cursor-pointer">
                               <ChatOutlinedIcon/>  Message
                           </span>
-                    </div>
-                    <div>
-                            <span className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
+                    </CustomMenu.Item>
+                    <CustomMenu.Item>
+                            <span className="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
                             dark:text-gray-200 dark:hover:text-white cursor-pointer"
                                   onClick={() => handleOnSignOut()}>
                                 <LogoutIcon/> Sign out</span>
-                    </div>
-                </div>
+                    </CustomMenu.Item>
+                </CustomMenu>
             </>
         }
     </>);

@@ -43,7 +43,7 @@ const ThemeButton = () => {
         <div id="theme-button" onClick={handleOnClick}>
             <div className="theme-button-circle"
                  style={{
-                     transform: isRight ? "translateX(30px)" : "translateX(0)",
+                     transform: isRight ? "translateX(25px)" : "translateX(0)",
                      transition: "transform 0.5s ease-in-out"
                  }}>
                 {isRight ? <img src={darkModeImg} alt={''} width={'25px'} height={'25px'}/> :

@@ -5,15 +5,22 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {UserProvider} from "./context/UserContext";
 import {AppProvider} from "./context/AppContext";
+import {QueryClientProvider} from "@tanstack/react-query";
+import {queryClient} from "./service/queryClient"
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
-        <AppProvider>
-            <UserProvider>
-                <App/>
-            </UserProvider>
-        </AppProvider>
+        <QueryClientProvider client={queryClient}>
+            <AppProvider>
+                <UserProvider>
+                    <App/>
+                    <ReactQueryDevtools initialIsOpen={false} />
+                </UserProvider>
+            </AppProvider>
+        </QueryClientProvider>
     </React.StrictMode>
 );
 

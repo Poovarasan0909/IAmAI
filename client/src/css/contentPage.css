@@ -250,6 +250,7 @@ p {
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
     padding-left: 5px;
+    position: relative;
 }
 .dark .response-code-language-name {
     background-color: #252626;
@@ -320,7 +321,7 @@ p {
 #theme-button {
     background-color: #00000014;
     max-width: 62px;
-    max-height: 34px;
+    max-height: 30px;
     border-radius: 50px;
     cursor: pointer;
     display: flex;
@@ -365,4 +366,41 @@ p {
     flex-direction: column;
     height: 100vh;
     width: 100%;
+}
+
+.checkbox-round {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: white;
+    vertical-align: middle;
+    border: 2px solid green;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+}
+.checkbox-round:checked {
+    background-color: white;
+}
+.checkbox-round:checked::after {
+    content: '✓';
+    color: #0b810b;
+    font-size: 30px;
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-40%, -55%);
+}
+.dark .checkbox-round {
+    background-color: transparent;
+    border: 2px solid #8ee150;
+}
+.dark .checkbox-round:checked::after {
+    color: #8ee150;
 }
