@@ -32,6 +32,16 @@ app.use((req, res, next) => {
 });
 
 // Middleware
+app.options('*', cors());
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "https://poovarasan0909.github.io");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Authorization, Content-Type, Id");
+    res.header("Access-Control-Allow-Credentials", "true");
+    next();
+});
+
 app.use(cors({
         origin: function (origin, callback) {
             if (!origin || allowedOrigins.includes(origin)) {
@@ -42,7 +52,8 @@ app.use(cors({
         },
         credentials: true,
         allowedHeaders: ["Authorization", "Content-Type", "Id"],
-        exposedHeaders: ["Authorization", "Id"]
+        exposedHeaders: ["Authorization", "Id"],
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     })
 );
 app.use(express.json({ limit: '10mb' }));
