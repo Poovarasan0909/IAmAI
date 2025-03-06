@@ -23,25 +23,16 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",");
 
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-
+    console.log(origin, allowedOrigins, !origin || !allowedOrigins.includes(origin))
     if (!origin || !allowedOrigins.includes(origin)) {
         return res.status(403).json({ message: "Access Denied: Not an allowed origin" });
     }
-
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", true);
     next();
 });
 
 // Middleware
-app.options('*', cors());
-
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "https://poovarasan0909.github.io");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Authorization, Content-Type, Id");
-    res.header("Access-Control-Allow-Credentials", "true");
-    next();
-});
-
 app.use(cors({
         origin: function (origin, callback) {
             if (!origin || allowedOrigins.includes(origin)) {
