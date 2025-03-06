@@ -22,8 +22,8 @@ const authenticationToken = require('./authentications/authenticationToken');
 const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",");
 
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    console.log(origin, allowedOrigins, !origin || !allowedOrigins.includes(origin))
+    const origin = req.headers.origin || "https://Poovarasan0909.github.io";
+    console.log(origin, allowedOrigins, !origin || !allowedOrigins.includes(origin), req.headers)
     if (!origin || !allowedOrigins.includes(origin)) {
         return res.status(403).json({ message: "Access Denied: Not an allowed origin" });
     }
