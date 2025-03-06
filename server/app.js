@@ -19,18 +19,11 @@ const userCredentialRoutes = require('./routes/userCredentialRoutes')
 
 const authenticationToken = require('./authentications/authenticationToken');
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",");
+const allowedOrigins = process.env.ALLOWED_ORIGINS;
 
 // Middleware
 app.use(cors({
-        origin: function (origin, callback) {
-            console.log(origin, allowedOrigins, allowedOrigins.includes(origin))
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("Not allowed by CORS"));
-            }
-        },
+        origin: allowedOrigins,
         credentials: true,
         allowedHeaders: ["Authorization", "Content-Type", "Id"],
         exposedHeaders: ["Authorization", "Id"],
