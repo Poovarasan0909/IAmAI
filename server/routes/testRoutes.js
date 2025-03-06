@@ -19,14 +19,6 @@ router.get('/createModule', async (req, res) => {
     }
 })
 
-router.post('/createUser', async (req, res) => {
-    try{
-        console.log(req,req.body, " - request....")
-        res.status(200).send(await createUser(req.body))
-    } catch (error){
-        res.status(400).send('Error while creating '+ error.message);
-    }
-})
 
 // const upload = multer({ dest: 'uploads/'});
 //
@@ -74,13 +66,6 @@ router.delete('/deleteUserData/:id', async (req, res) => {
     }
 })
 
-router.post('/isUserLoginExit', async (req, res) => {
-    try {
-        res.status(200).send(await checkIsUserExit(req.body));
-    } catch (error){
-        res.status(400).send('Error : ' + error.message);
-    }
-})
 
 router.get('/getUserDataById/:id', async (req, res) => {
     try {

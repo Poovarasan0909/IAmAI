@@ -4,15 +4,18 @@ const UserGeolocation = require('../models/userGeolocation');
 const mongoose = require('mongoose');
 const {uploadFile, deleteImage} = require("../service/cloudinaryAPIs");
 const ChatMessage = require('../models/chatMessageModel');
+const bcrypt = require("bcryptjs");
 const axios = require("axios");
+const {sign} = require("jsonwebtoken");
 
 
 async function createUser(body) {
     try {
-     const newUser = new User({
+        const hashedPassword = await bcrypt.hash(body.userPassword, 10);
+        const newUser = new User({
          username: body.userName,
          email: body.userEmail,
-         password: body.userPassword
+         password: hashedPassword
      });
      await newUser.save();
      console.log("User created -> Email:", body.userEmail," Password: ",body.userPassword);
@@ -98,14 +101,20 @@ async function getAllUsers() {
         console.error('Error while fetching all users : ' + error.message)
     }
 }
-async function checkIsUserExit(data) {
-   const users = await getAllUsers();
-    for(const user of users) {
-        if(user.email === data.userEmail && user.password === data.userPassword) {
-            return user;
-        }
+async function checkIsUserExit(data, res) {
+    const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
+    const { userEmail, userPassword } = data;
+    const user = await User.findOne({email: userEmail });
+    if (!user) {
+        return res.status(400).json({ error: "User not found" });
     }
-    return null;
+    const isMatch = await bcrypt.compare(userPassword, user.password);
+    if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
+
+    const token = sign({ id : user._id }, JWT_SECRET, { expiresIn: '1h' });
+    res.cookie("token", token, { httpOnly: true, sameSite: "lax", secure: true });
+    res.setHeader("Authorization", `Bearer ${token}`);
+    res.status(200).send(user);
 }
 
 async function getUserDataByUserId(id) {

@@ -11,10 +11,10 @@ import {AppContext} from "./context/AppContext";
 // Importing CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import axios from "axios";
 import {UserContext} from "./context/UserContext";
 import Chat from "./content/Chat";
 import ForgotPassword from "./content/ForgotPassword";
+import {setAuthToken} from "./service/authToken";
 
 function App() {
     let {isServerActive, setIsServerActive, setGeolocation} = useContext(AppContext);
@@ -24,12 +24,16 @@ function App() {
     window.addEventListener('focus', () => setIsWindowActive(true));
 
     useEffect( () =>  {
+        const userData = JSON.parse(sessionStorage.getItem('user'));
+        const userId = userData ? userData?._id : null;
         async function checkIsServerActive() {
-            const res = await getRequest('/');
+            const res = await getRequest('/', {'Id' : `${userId}`});
             if(res && res.status >= 200 && res.status < 300) {
                 // eslint-disable-next-line react-hooks/exhaustive-deps
                 isServerActive = true;
                 setIsServerActive(true)
+                const token = res.headers?.authorization;
+                setAuthToken(token);
                 console.log("Server is Active: ", isServerActive);
             } else {
                 console.log('Response Failed with status: ' + res.status);
@@ -48,7 +52,7 @@ function App() {
     //                     geolocation:add.data
     //                 }
     //                 if(!localStorage.getItem('isLoaded')) {
-    //                     postRequest('/saveGeolocation', params)
+    //                     postRequest('api/saveGeolocation', params)
     //                 }
     //                 localStorage.setItem('isLoaded', true);
     //             }).catch((e) => console.error(e))

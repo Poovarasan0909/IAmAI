@@ -12,6 +12,7 @@ import ThemeButton from "../content/ThemeButton";
 import {Helmet} from "react-helmet";
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import {setAuthToken} from "../service/authToken";
 
 
 const SignUpAndSignIn = ({formType}) => {
@@ -49,11 +50,12 @@ const SignUpAndSignIn = ({formType}) => {
                     postRequest('createUser', {userName: userName, userEmail: userEmail, userPassword: userPassword})
                         .then((res) => {
                             setState({...state, user: res.data});
+                            const token = res.headers?.authorization;
+                            setAuthToken(token);
                             sessionStorage.setItem('user', JSON.stringify(res.data));
                             clearValues();
-                            navigate('/');
                             setIsloading(false);
-                        })
+                        }).then(() => navigate('/'))
                 } else {
                     showMessage('Enter valid password.', 'error')
                 }
@@ -68,6 +70,8 @@ const SignUpAndSignIn = ({formType}) => {
                     .then((res) => {
                         if (res.data) {
                             setState({...state, user: res.data});
+                            const token = res.headers?.authorization;
+                            setAuthToken(token);
                             sessionStorage.setItem('user', JSON.stringify(res.data));
                             clearValues();
                             navigate('/');

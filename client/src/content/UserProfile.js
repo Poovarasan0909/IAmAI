@@ -7,6 +7,9 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined';
 import {AppContext} from "../context/AppContext";
 import CustomMenu from "../common/CustomMenu";
+import {useQuery} from "@tanstack/react-query";
+import {getRequest} from "../API_helper/APIs";
+import {setAuthToken} from "../service/authToken";
 
 const UserProfile = ({state, setState}) => {
     const navigate = useNavigate();
@@ -17,9 +20,20 @@ const UserProfile = ({state, setState}) => {
 
     const handleOnSignOut = () => {
         setState({ ...state, user: null});
+        refetch().then((res) => {
+            const token = res.data.headers.get('authorization');
+            setAuthToken(token);
+        })
         sessionStorage.removeItem('user');
         navigate('/')
     }
+    const {refetch} = useQuery({
+        queryKey: ['user_log_out'],
+        queryFn: async () => {
+            return await getRequest('userLogout')
+        },
+        enabled: false
+    })
 
     return (<>
         {!state.user ? <>

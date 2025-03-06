@@ -2,20 +2,52 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 4000;
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+
 const mongoose = require('mongoose');
 const { createServer } = require('node:http');
 const { Server } = require('socket.io');
+
 const ChatMessage = require('./models/chatMessageModel');
 const PrivateMessage = require('./models/privateMessageModel');
 
 const testRoutes = require('./routes/testRoutes');
 const geminiApiRoutes = require('./routes/GeminiApiRoutes');
 const chatRoutes = require('./routes/chatRoutes')
+const userCredentialRoutes = require('./routes/userCredentialRoutes')
+
+const authenticationToken = require('./authentications/authenticationToken');
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",");
+
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+
+    if (!origin || !allowedOrigins.includes(origin)) {
+        return res.status(403).json({ message: "Access Denied: Not an allowed origin" });
+    }
+
+    next();
+});
 
 // Middleware
-app.use(cors());
+app.use(cors({
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true,
+        allowedHeaders: ["Authorization", "Content-Type", "Id"],
+        exposedHeaders: ["Authorization", "Id"]
+    })
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(cookieParser());
 
 const server = createServer(app);
 const io = new Server(server, {
@@ -38,6 +70,22 @@ function findSocketIdsByUserId(userId) {
 }
 
 const setUpSocket = () => {
+    io.use((socket, next) => {
+        const token = socket.handshake.auth.token;
+        if (!token) {
+            console.log("Socket connection rejected: No token provided");
+            return next(new Error("Authentication error"));
+        }
+        try {
+            const rawToken = token.split(" ")[1];
+            const decoded = jwt.verify(rawToken, process.env.JWT_SECRET);
+            socket.user = decoded;
+            next();
+        } catch (error) {
+            console.error("Invalid token:", error.message);
+            return next(new Error("Authentication error"));
+        }
+    })
     io.on('connection', async (socket) => {
         socket.on('error', (err) => {
             console.error('Socket error:', err.message);
@@ -101,7 +149,6 @@ const setUpSocket = () => {
         socket.on("disconnect", () => {
             console.log("User Disconnected:", socket.id);
             for (const [userId, socketId] of onlineUsers.entries()) {
-                console.log(userId, socketId, socketId.socketId);
                 if(socketId.socketId === socket.id) {
                     onlineUsers.delete(userId);
                     io.emit('online_users', Array.from(onlineUsers.values()));
@@ -133,10 +180,15 @@ mongoose.connection.on('error', (err) => {
 //     console.log('Connected to MongoDB');
 // });
 
-app.use('/', testRoutes);
-app.use('/', geminiApiRoutes);
-app.use('/', chatRoutes);
+app.use('/', userCredentialRoutes);
 
 app.get('/', (req, res) => {
+    const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key_test_1234";
+    const header = req.headers;
+    const token = jwt.sign({id: `${header?.id && header?.id !== 'null' ? header?.id : 'stranger_is_here'}`}, JWT_SECRET, {expiresIn: '1d'});
+    res.setHeader("Authorization", `Bearer ${token}`);
     res.send('Hello World!');
 });
+app.use('/api', authenticationToken, geminiApiRoutes);
+app.use('/api', authenticationToken, testRoutes);
+app.use('/api', authenticationToken, chatRoutes);

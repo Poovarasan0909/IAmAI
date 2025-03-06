@@ -23,6 +23,8 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPlus, faEllipsis} from "@fortawesome/free-solid-svg-icons";
 import {AppContext} from "../context/AppContext";
 import axios from "axios";
+import {useQuery} from "@tanstack/react-query";
+import {getAuthToken} from "../service/authToken";
 
 const DrawerHeader = styled("div")(({theme}) => ({
     display: "flex",
@@ -42,12 +44,6 @@ const SideBar = ({
     const [iconPosition, setIconPosition] = useState({ top: 0, left: 0, bottom: 0 });
     const listRef = useRef(null);
     const [mouseHoveredListId, setMouseHoveredListId] = useState(null);
-
-    useEffect(() => {
-        const userId = state.user?._id;
-        getUserDataByUserId(userId);
-    }, [state]);
-
 
     const handleScroll = () => {
         if (!listRef.current) return;
@@ -72,13 +68,19 @@ const SideBar = ({
         setListItemPopupMenuId(listItemPopupMenuId === hisId ? null : hisId);
     }
 
-    const getUserDataByUserId = (userId) => {
-        if (userId) {
-            getRequest(`getUserDataById/${userId}`).then((res) => {
-                setHistoryList(res.data);
-            })
-        }
-    }
+    const {data: userData, refetch: refetchUserData, isSuccess: isSuccessUserData} = useQuery({
+        queryKey: ['userData', state.user?._id],
+        queryFn: async () => {
+            return await getRequest(`api/getUserDataById/${state.user?._id}`);
+        },
+        retry: 3,
+        retryDelay: 2000,
+        staleTime: 2000,
+        enabled: !!state.user?._id && getAuthToken() !== 'null'
+    })
+    useEffect(() => {
+        setHistoryList(userData?.data);
+    }, [userData, isSuccessUserData]);
 
     const handleOnHistoryResponse = (his) => {
         setLoading(true);
@@ -225,8 +227,8 @@ const SideBar = ({
                                                     <div className={"text-[#ff7777] cursor-pointer rounded p-1 hover:bg-red-100 dark:hover:bg-[#0000005c]"}
                                                     onClick={() => {
                                                         setHistoryList(historyList.filter((val) => listItemPopupMenuId !== val._id))
-                                                        deleteRequest(`deleteUserData/${listItemPopupMenuId}`)
-                                                            .then(() => getUserDataByUserId(state.user?._id))
+                                                        deleteRequest(`api/deleteUserData/${listItemPopupMenuId}`)
+                                                            .then(() => refetchUserData())
                                                     }}>
                                                         <span className={"pr-2 "}><DeleteIcon/></span>
                                                         Delete

@@ -50,7 +50,7 @@ const GeminiApi = () => {
             if (file) {
                 response = await uploadFileInChunks(file, prompt);
             } else {
-                response = postRequest('/gemini-AI-response', formData)
+                response = postRequest('api/gemini-AI-response', formData)
             }
             return response;
         } catch (error) {
@@ -74,7 +74,7 @@ const GeminiApi = () => {
             formData.append('fileName', file.name);
             formData.append('prompt', JSON.stringify(prompt));
             try {
-               const response = await postRequest('/gemini-AI-response', formData);
+               const response = await postRequest('api/gemini-AI-response', formData);
                 if(response.data && response.data.isFinal) {
                    return response;
                }
@@ -118,10 +118,10 @@ const GeminiApi = () => {
         const userId = state.user?._id;
         const userRole = conversation.filter((val) => val.role === 'user');
         const lable = userRole.length > 0 ? userRole[userRole.length-1].parts.text : '';
-        postRequest('/createUserData', {id: selectedHistoryId, userId: userId, historyLabel: lable, chatHistory: conversation})
+        postRequest('api/createUserData', {id: selectedHistoryId, userId: userId, historyLabel: lable, chatHistory: conversation})
             .then((createdDataResponse) => {
                 if (userId) {
-                    getRequest(`getUserDataById/${userId}`).then((res) => {
+                    getRequest(`api/getUserDataById/${userId}`).then((res) => {
                         setHistoryList(res.data);
                         const historyIdToFind = selectedHistoryId
                         if(createdDataResponse.data._id)
@@ -149,7 +149,7 @@ const GeminiApi = () => {
             "I want you to continue the conversation based on the *last* 'user' entry in the `chatHistory`. " +
             "you should respond as a 'model' to the last 'users' message. you should generate the text value under the parts only, not generate entire object. " +
             "Respond in a friendly and casual tone, using emojis where appropriate. You should Read the entire conversation before generate the response. " +
-            "Generate a clear continuation response and explain to the points. you may provide an example for better understanding. "
+            "Generate a clear continuation response and explain to the points. you may provide an example for better understanding. if asking about coding you should give clear example code with explanation. "
 
         const nameRegex = /what.*your.*name|who.*are.*you|can.*say.*your.*name|tell.*your.*name/i;
         if (nameRegex.test(prompt)) {

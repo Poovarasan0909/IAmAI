@@ -22,7 +22,11 @@ import {useQuery} from "@tanstack/react-query";
 
 const baseURL = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.29.57:4000' : packageJson.baseURL;
 
-const socket = io(baseURL);
+const token = localStorage.getItem("token");
+const socket = io(baseURL, {
+    auth: {token},
+    transports: ["websocket"],
+});
 
 const Chat = () => {
     const {isServerActive, isServerMsgVisible, themeMode} = useContext(AppContext);
@@ -137,12 +141,12 @@ const Chat = () => {
 
 
     const fetchPrivateMessages = async (senderId, receiverId) => {
-        const response = await postRequest('/fetchPrivateChatMessages', {senderId, receiverId});
+        const response = await postRequest('api/fetchPrivateChatMessages', {senderId, receiverId});
         if (response.status !== 200) throw new Error('Failed to fetch private messages');
         return response.data;
     }
     const fetchPublicMessage = async () => {
-        const response = await getRequest('/fetchAllPublicChatMessage');
+        const response = await getRequest('api/fetchAllPublicChatMessage');
         if (response.status !== 200) throw new Error('Failed to fetch public messages');
         return response.data;
     }
@@ -165,7 +169,7 @@ const Chat = () => {
         if(fetchedPublicMessageData) {
             setMessages(fetchedPublicMessageData.map((msg) => ({
                 id: msg._id,
-                status: msg.userId === state.user._id ? "sent" : "received",
+                status: msg.userId === state.user?._id ? "sent" : "received",
                 message: msg.message,
                 userName: msg.userName,
                 color: msg.color,
@@ -271,7 +275,7 @@ const Chat = () => {
     }
 
     const deleteAllChatMessages = () => {
-        deleteRequest('/deleteClearChatMessages').then(r => {
+        deleteRequest('api/deleteClearChatMessages').then(r => {
             if (r.status === 200) {
                 setMessages([]);
             }
@@ -295,7 +299,7 @@ const Chat = () => {
         }
     }
     const handleDeleteSelectGroupChat = () => {
-        postRequest('deleteSelectedGroupChats', selectedGroupChat)
+        postRequest('api/deleteSelectedGroupChats', selectedGroupChat)
             .then(() => {
                 setMessages(messages.filter(msg => !selectedGroupChat.includes(msg.id)));
                 clearSelections();
@@ -303,7 +307,7 @@ const Chat = () => {
             })
     }
     const handleDeleteSelectPrivateChat = () => {
-        postRequest('deleteSelectedPrivateChats', selectedPrivateChat).then(() => {
+        postRequest('api/deleteSelectedPrivateChats', selectedPrivateChat).then(() => {
             setPrivateMessages(privateMessages.filter(msg => !selectedPrivateChat.includes(msg._id)));
             clearSelections()
             uncheckAllInputField(privateChatRef);
