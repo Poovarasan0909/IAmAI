@@ -37,7 +37,7 @@ app.use(cookieParser());
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
     },
 });
@@ -55,22 +55,22 @@ function findSocketIdsByUserId(userId) {
 }
 
 const setUpSocket = () => {
-    io.use((socket, next) => {
-        const token = socket.handshake.auth.token;
-        if (!token) {
-            console.log("Socket connection rejected: No token provided");
-            return next(new Error("Authentication error"));
-        }
-        try {
-            const rawToken = token.split(" ")[1];
-            const decoded = jwt.verify(rawToken, process.env.JWT_SECRET);
-            socket.user = decoded;
-            next();
-        } catch (error) {
-            console.error("Invalid token:", error.message);
-            return next(new Error("Authentication error"));
-        }
-    })
+    // io.use((socket, next) => {
+    //     const token = socket.handshake.auth.token;
+    //     if (!token) {
+    //         console.log("Socket connection rejected: No token provided");
+    //         return next(new Error("Authentication error"));
+    //     }
+    //     try {
+    //         const rawToken = token.split(" ")[1];
+    //         const decoded = jwt.verify(rawToken, process.env.JWT_SECRET);
+    //         socket.user = decoded;
+    //         next();
+    //     } catch (error) {
+    //         console.error("Invalid token:", error.message);
+    //         return next(new Error("Authentication error"));
+    //     }
+    // })
     io.on('connection', async (socket) => {
         socket.on('error', (err) => {
             console.error('Socket error:', err.message);
@@ -173,6 +173,10 @@ app.get('/', (req, res) => {
     const token = jwt.sign({id: `${header?.id && header?.id !== 'null' ? header?.id : 'stranger_is_here'}`}, JWT_SECRET, {expiresIn: '1d'});
     res.setHeader("Authorization", `Bearer ${token}`);
     res.send('Hello World!');
+});
+app.get('/api/setUpMessageSocket', authenticationToken, async (req, res) => {
+    await setUpSocket();
+    res.send('Socket is set up!');
 });
 app.use('/api', authenticationToken, geminiApiRoutes);
 app.use('/api', authenticationToken, testRoutes);

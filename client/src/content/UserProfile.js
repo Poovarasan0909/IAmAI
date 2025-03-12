@@ -86,7 +86,10 @@ const UserProfile = ({state, setState}) => {
                                 <div className={"absolute right-px"}><ThemeButton/></div>
                             </div>
                         </CustomMenu.Item>}
-                    <CustomMenu.Item onClick={()=> navigate('/IAmAI/chat')}>
+                    <CustomMenu.Item onClick={()=> {
+                        getRequest('api/setUpMessageSocket')
+                        navigate('/IAmAI/chat')
+                    }}>
                           <span className="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600
                             dark:text-gray-200 dark:hover:text-white cursor-pointer">
                               <ChatOutlinedIcon/>  Message
