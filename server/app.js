@@ -18,6 +18,8 @@ const chatRoutes = require('./routes/chatRoutes')
 const userCredentialRoutes = require('./routes/userCredentialRoutes')
 
 const authenticationToken = require('./authentications/authenticationToken');
+const {storeChatMessage} = require("./managers/chatMessageManager");
+const {storePrivateMessage} = require("./managers/privateMessageManager");
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS;
 
@@ -76,9 +78,11 @@ const setUpSocket = () => {
             console.error('Socket error:', err.message);
         });
 
-        socket.on('close', () => {
-            console.log('Client disconnected');
-        });
+        if(!allowedOrigins.includes(socket.handshake.headers.origin)) {
+            console.log("Unauthorized origin:", socket.handshake.headers.origin);
+            socket.disconnect(true);
+            return;
+        }
 
         const chatHistory = await ChatMessage.find().sort({ timeStamp: 1 }).limit(50);
         socket.emit("chat_history", chatHistory);
@@ -89,50 +93,19 @@ const setUpSocket = () => {
             io.emit('online_users', Array.from(onlineUsers.values()));
         });
 
-        socket.on("send_message", async (data) => {
-            const chatMessage = new ChatMessage({
-                userId: data.userId,
-                userName: data.userName,
-                message: data.message,
-                color: data.color,
-                timeStamp: Date.now(),
-            });
+        socket.on("getListOfOnlineUsers", () => {
+            io.emit("online_users", Array.from(onlineUsers.values()));
+        });
 
-            await chatMessage.save();
+        socket.on("send_message", async (data) => {
+            const chatMessage = await storeChatMessage(data, io);
             io.emit("receive_message", chatMessage);
         })
 
         socket.on("send_private_message", async (data) => {
-            if(data.receiverId) {
-                const recipient = onlineUsers.get(data.receiverId);
-                if(recipient) {
-                    const privateMessage = new PrivateMessage({
-                        message: data.message,
-                        senderId: data.senderId,
-                        senderName: data.senderName,
-                        receiverId: data.receiverId,
-                        receiverName: data.receiverName,
-                        color: data.color,
-                        timeStamp: Date.now(),
-                    })
-                    await privateMessage.save();
-                    const findAllMessages = await PrivateMessage.find({ $or: [
-                            {senderId: data.senderId, receiverId: data.receiverId},
-                            {senderId: data.receiverId, receiverId: data.senderId}
-                        ]}).sort({ timeStamp: 1 });
-                    findSocketIdsByUserId(data.receiverId).forEach(socketId => {
-                        if(socketId)
-                           io.to(socketId).emit("receive_private_message", findAllMessages);
-                    })
-                    findSocketIdsByUserId(data.senderId).forEach(socketId => {
-                        if(socketId)
-                            io.to(socketId).emit("receive_private_message", findAllMessages);
-                    })
-                }
-            }
+            await storePrivateMessage(data, io, findSocketIdsByUserId, onlineUsers);
         });
         socket.on("disconnect", () => {
-            console.log("User Disconnected:", socket.id);
             for (const [userId, socketId] of onlineUsers.entries()) {
                 if(socketId.socketId === socket.id) {
                     onlineUsers.delete(userId);
@@ -174,10 +147,7 @@ app.get('/', (req, res) => {
     res.setHeader("Authorization", `Bearer ${token}`);
     res.send('Hello World!');
 });
-app.get('/api/setUpMessageSocket', authenticationToken, async (req, res) => {
-    await setUpSocket();
-    res.send('Socket is set up!');
-});
+
 app.use('/api', authenticationToken, geminiApiRoutes);
 app.use('/api', authenticationToken, testRoutes);
 app.use('/api', authenticationToken, chatRoutes);

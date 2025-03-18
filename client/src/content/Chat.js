@@ -51,6 +51,17 @@ const Chat = () => {
     const [selectedPrivateChat, setSelectedPrivateChat] = useState([]);
     const [isGroupChatView, setIsGroupChatView] = useState(false);
 
+    window.onload = () => {
+        socket.emit('getListOfOnlineUsers');
+        socket.on("online_users", (users) => {
+            const onlineUser = users.map(user =>
+                user.userId === state.user._id ? {...user, userName: "You"} : user);
+            setTimeout(() => {
+                setOnlineUsers(onlineUser);
+            }, 100)
+        });
+    }
+
     useEffect(() => {
         const updateHeight = () => setChatHeight(window.innerHeight - 160);
         window.addEventListener('resize', updateHeight);
@@ -112,7 +123,8 @@ const Chat = () => {
                 message: msg.message,
                 userName: msg.userName,
                 color: msg.color,
-                timeStamp: msg.timeStamp
+                timeStamp: msg.timeStamp,
+                type:msg.type
             })));
         });
         socket.on("receive_message", (data) => {
@@ -124,7 +136,8 @@ const Chat = () => {
                 message: data.message,
                 userName: data.userName,
                 color: data.color,
-                timeStamp: data.timeStamp
+                timeStamp: data.timeStamp,
+                type:data.type
             }]);
             setTimeout(() => {
                 setScrollDownToLatestMessage(chatRef);
@@ -173,7 +186,8 @@ const Chat = () => {
                 message: msg.message,
                 userName: msg.userName,
                 color: msg.color,
-                timeStamp: msg.timeStamp
+                timeStamp: msg.timeStamp,
+                type: msg.type
             })));
             setTimeout(() => {
                 setScrollDownToLatestMessage(chatRef)
@@ -322,9 +336,15 @@ const Chat = () => {
 
     const privateChatRoomElement = () => (
         <div>
-            {getFilteredPrivateMessages()?.map((msg, index) => (
-                <div
-                    className={`flex mb-[1px] rounded ${selectedPrivateChat.includes(msg._id) ? 'bg-gray-200 dark:bg-[#6b6c6d]' : ''} ${isChatMessageSelectable ? 'hover:bg-gray-100 hover:dark:bg-[#3d3e41]' : ''}`}>
+            {getFilteredPrivateMessages()?.map((msg, index) => msg.type === "date" ? (
+                    <div className={'flex text-center'}>
+                        <hr className={'flex-grow border-gray-400 dark:border-gray-600 opacity-50'}/>
+                        <span className={'rounded text-sm text-gray-600 dark:text-gray-200 shadow-md bg-gray-100 dark:bg-gray-700 px-2 py-1 animate-slide-in-sent h-fit'}>{msg.message}</span>
+                        <hr className={'flex-grow border-gray-400 dark:border-gray-600 opacity-50'}/>
+                    </div>) :
+                (
+                    <div
+                        className={`flex mb-[1px] rounded ${selectedPrivateChat.includes(msg._id) ? 'bg-gray-200 dark:bg-[#6b6c6d]' : ''} ${isChatMessageSelectable ? 'hover:bg-gray-100 hover:dark:bg-[#3d3e41]' : ''}`}>
                                 <span
                                     className={`flex relative items-center justify-center ${isChatMessageSelectable ? "block" : "hidden"}`}>
                                     <input key={index} id="group_chat_select_input" type="checkbox"
@@ -332,25 +352,25 @@ const Chat = () => {
                                            onChange={(e) => handleCheckboxChange(e, msg)}
                                     />
                                 </span>
-                    <div key={index} className={`relative my-1 ml-1 rounded-lg max-w-[70%] max-w-fit 
+                        <div key={index} className={`relative my-1 ml-1 rounded-lg max-w-[70%] max-w-fit 
                                 ${msg.status === "sent" ? "animate-slide-in-sent ml-auto bg-blue-500 text-white whitespace-nowrap" :
-                        "animate-slide-in-receive mr-auto bg-gray-200 text-black whitespace-nowrap"}`}>
-                        {msg.status === "received" &&
-                            <div className={`text-[13px] px-2`} style={{color: msg.color}}>
+                            "animate-slide-in-receive mr-auto bg-gray-200 text-black whitespace-nowrap"}`}>
+                            {msg.status === "received" &&
+                                <div className={`text-[13px] px-2`} style={{color: msg.color}}>
                                     <span
                                         className={' rounded px-1 relative'}>{msg.senderName.length > 40 ? msg.senderName.substring(0, 40) + '...' : msg.senderName}</span>
-                            </div>}
-                        <div
-                            className={`pl-3 pr-1 flex justify-between items-end  ${msg.status === "sent" && "pt-1 "}`}>{msg.message}
-                            <div className={`text-[10px] pl-2 ${
-                                msg.status === "sent" ? "text-white" : "text-gray-500"
-                            }`}>
-                                {convertToLocalTime(msg.timeStamp)}
+                                </div>}
+                            <div
+                                className={`pl-3 pr-1 flex justify-between items-end  ${msg.status === "sent" && "pt-1 "}  whitespace-pre-line`}>{msg.message}
+                                <div className={`text-[10px] pl-2 ${
+                                    msg.status === "sent" ? "text-white" : "text-gray-500"
+                                }`}>
+                                    {convertToLocalTime(msg.timeStamp)}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                ))}
         </div>
     )
     let timer = null;
@@ -429,16 +449,19 @@ const Chat = () => {
                             <div>{selectedPrivateUser?.userName.substring(0, 1).toUpperCase() + selectedPrivateUser?.userName.substring(1)}</div>}
                         <div className={'absolute right-0'}>
                             {selectedGroupChat.length > 0 || selectedPrivateChat.length > 0 ?
-                               <><ContentCopyIcon className={`cursor-pointer hover:text-gray-500`} style={{width: '20px', height: '20px', cursor: "pointer"}} onClick={() => selectedCopyTextList()}/>
-                                <DeleteOutlineRoundedIcon titleAccess={'Delete'} onClick={() => {
-                                    if(selectedPrivateUser === null) {
-                                        handleDeleteSelectGroupChat();
-                                    } else {
-                                        handleDeleteSelectPrivateChat();
-                                    }
-                                }} className={`cursor-pointer text-red-400`}/></>
+                                <><ContentCopyIcon className={`cursor-pointer hover:text-gray-500`}
+                                                   style={{width: '20px', height: '20px', cursor: "pointer"}}
+                                                   onClick={() => selectedCopyTextList()}/>
+                                    <DeleteOutlineRoundedIcon titleAccess={'Delete'} onClick={() => {
+                                        if (selectedPrivateUser === null) {
+                                            handleDeleteSelectGroupChat();
+                                        } else {
+                                            handleDeleteSelectPrivateChat();
+                                        }
+                                    }} className={`cursor-pointer text-red-400`}/></>
                                 : null}
-                            <MoreVertIcon className={`cursor-pointer`} onClick={() => setIsChatMenuOpen(!isChatMenuOpen)}/>
+                            <MoreVertIcon className={`cursor-pointer`}
+                                          onClick={() => setIsChatMenuOpen(!isChatMenuOpen)}/>
                         </div>
                         <CustomMenu isMenuOpen={isChatMenuOpen} setIsMenuOpen={setIsChatMenuOpen}
                                     className={'absolute right-0  top-8'}>
@@ -459,18 +482,20 @@ const Chat = () => {
                                 </CustomMenu.Item> : null}
                         </CustomMenu>
                     </h5>
-                    <div className={`relative z-50 w-full px-3 py-2 mt-1 ${selectedGroupChat.length === 0 ? 'hidden' : 'block'} min-[721px]:hidden bg-[#e1f5fe] drop-shadow-lg`}>
-                       <CloseIcon onClick={() => {
-                           setSelectedGroupChat([]);
-                           setIsChatMessageSelectable(false)
-                       }}/> {selectedGroupChat.length}
-                      <span className={`absolute right-2 space-x-2`}>
-                          <ContentCopyIcon className={`cursor-pointer hover:text-gray-500`} style={{width: '20px', height: '20px'}}
+                    <div
+                        className={`relative z-50 w-full px-3 py-2 mt-1 ${selectedGroupChat.length === 0 ? 'hidden' : 'block'} min-[721px]:hidden bg-[#e1f5fe] drop-shadow-lg`}>
+                        <CloseIcon onClick={() => {
+                            setSelectedGroupChat([]);
+                            setIsChatMessageSelectable(false)
+                        }}/> {selectedGroupChat.length}
+                        <span className={`absolute right-2 space-x-2`}>
+                          <ContentCopyIcon className={`cursor-pointer hover:text-gray-500`}
+                                           style={{width: '20px', height: '20px'}}
                                            onClick={() => selectedCopyTextList()}/>
                           <DeleteOutlineRoundedIcon className={`text-red-400`}
-                                              onClick={() => {
-                                                    handleDeleteSelectGroupChat();
-                                              }}/>
+                                                    onClick={() => {
+                                                        handleDeleteSelectGroupChat();
+                                                    }}/>
                       </span>
                     </div>
                     {/*Group chat both laptop and mobile */}
@@ -478,61 +503,68 @@ const Chat = () => {
                                                   max-[720px]:h-[82%] p-2 max-[720px]:${chatTabValue === 'list_view' || selectedPrivateUser !== null  ? 'hidden' : 'block'} min-[721px]:${selectedPrivateUser !== null ? 'hidden' : 'block'}`}>
                         {isPublicMessageLoading ? <ListLoader/> :
                             <div>
-                                {messages.map((msg, index) => (
-                                    <div
-                                        className={`flex mb-[1px] rounded ${selectedGroupChat.includes(msg.id) ? 'bg-gray-200' : ''} ${isChatMessageSelectable ? 'min-[721px]:hover:bg-gray-100' : ''}`}>
-                                <span
-                                    className={`flex relative items-center justify-center ${isChatMessageSelectable ? "block" : "hidden"} max-[720px]:hidden`}>
-                                    <input key={index} id="group_chat_select_input" type="checkbox"
-                                           className={"checkbox-round"}
-                                           onChange={(e) => handleCheckboxChange(e, msg)}
-                                    />
-                                </span>
-                                        <div key={index}
-                                             className={`relative my-[2px] ml-1 rounded-lg max-[720px]:select-none max-w-[70%] max-w-fit ${
-                                                 msg.status === "sent" ? "animate-slide-in-sent ml-auto bg-blue-500 text-white whitespace-nowrap"
-                                                     : "animate-slide-in-receive mr-auto bg-gray-200 text-black whitespace-nowrap"
-                                             }`}
-                                             onTouchStart={() => {
-                                                 timer = setTimeout(() => {
-                                                     setIsChatMessageSelectable(true);
-                                                     setSelectedGroupChat((prevSelectedGroupChats) =>
-                                                         [...prevSelectedGroupChats, msg.id]
-                                                     )
-                                                 }, 500);
-                                             }}
-                                             onTouchEnd={() => clearInterval(timer)}
-                                             onClick={(e) => {
-                                                 if (isChatMessageSelectable) {
-                                                     setSelectedGroupChat((prevSelectedGroupChats) => {
-                                                         const updatedSelectedGroupChats = prevSelectedGroupChats.includes(msg.id)
-                                                             ? prevSelectedGroupChats.filter(id => id !== msg.id) : [...prevSelectedGroupChats, msg.id];
-
-                                                         if (updatedSelectedGroupChats.length === 0) {
-                                                             setIsChatMessageSelectable(false);
-                                                         }
-                                                         return updatedSelectedGroupChats
-                                                     });
-                                                 }
-                                             }}
-                                        >
-                                            {msg.status === "received" &&
-                                                <div className={`text-[11px] px-2`} style={{color: msg.color}}>
-                                    <span
-                                        className={'rounded px-1 relative'}>{msg.userName.length > 40 ? msg.userName.substring(0, 40) + '...' : msg.userName}</span>
-                                                </div>}
+                                {messages.map((msg, index) =>
+                                    msg.type === "date" ? (
+                                            <div className={'flex text-center'}>
+                                                <hr className={'flex-grow border-gray-400 dark:border-gray-600 opacity-50'}/>
+                                                <span className={'rounded text-sm text-gray-600 dark:text-gray-200 shadow-md bg-gray-100 dark:bg-gray-700 px-2 py-1 animate-slide-in-sent h-fit'}>{msg.message}</span>
+                                                <hr className={'flex-grow border-gray-400 dark:border-gray-600 opacity-50'}/>
+                                            </div>) :
+                                        (
                                             <div
-                                                className={`${selectedGroupChat.includes(msg.id) ? 'copy-text' : ''} text-sm pl-3 pr-1 flex justify-between items-end ${msg.status === "sent" && "pt-1 "} `}>
-                                                {msg.message}
-                                                <div className={`text-[9px] pl-2 ${
-                                                    msg.status === "sent" ? "text-white" : "text-gray-500"
-                                                }`}>
-                                                    {convertToLocalTime(msg.timeStamp)}
+                                                className={`flex mb-[1px] rounded ${selectedGroupChat.includes(msg.id) ? 'bg-gray-200 dark:bg-[#6b6c6d]' : ''} ${isChatMessageSelectable ? 'min-[721px]:hover:bg-gray-100 dark:min-[721px]:hover:bg-[#3d3e41]' : ''}`}>
+                                        <span
+                                            className={`flex relative items-center justify-center ${isChatMessageSelectable ? "block" : "hidden"} max-[720px]:hidden`}>
+                                            <input key={index} id="group_chat_select_input" type="checkbox"
+                                                   className={"checkbox-round"}
+                                                   onChange={(e) => handleCheckboxChange(e, msg)}
+                                            />
+                                        </span>
+                                                <div key={index}
+                                                     className={`relative my-[2px] ml-1 rounded-lg max-[720px]:select-none max-w-[70%] max-w-fit ${
+                                                         msg.status === "sent" ? "animate-slide-in-sent ml-auto bg-blue-500 text-white whitespace-nowrap"
+                                                             : "animate-slide-in-receive mr-auto bg-gray-200 text-black dark:bg-[#4b5563] whitespace-nowrap"
+                                                     }`}
+                                                     onTouchStart={() => {
+                                                         timer = setTimeout(() => {
+                                                             setIsChatMessageSelectable(true);
+                                                             setSelectedGroupChat((prevSelectedGroupChats) =>
+                                                                 [...prevSelectedGroupChats, msg.id]
+                                                             )
+                                                         }, 500);
+                                                     }}
+                                                     onTouchEnd={() => clearInterval(timer)}
+                                                     onClick={(e) => {
+                                                         if (isChatMessageSelectable) {
+                                                             setSelectedGroupChat((prevSelectedGroupChats) => {
+                                                                 const updatedSelectedGroupChats = prevSelectedGroupChats.includes(msg.id)
+                                                                     ? prevSelectedGroupChats.filter(id => id !== msg.id) : [...prevSelectedGroupChats, msg.id];
+
+                                                                 if (updatedSelectedGroupChats.length === 0) {
+                                                                     setIsChatMessageSelectable(false);
+                                                                 }
+                                                                 return updatedSelectedGroupChats
+                                                             });
+                                                         }
+                                                     }}
+                                                >
+                                                    {msg.status === "received" &&
+                                                        <div className={`text-[11px] px-2`} style={{color: msg.color}}>
+                                                    <span
+                                                        className={'rounded px-1 relative'}>{msg.userName?.length > 40 ? msg.userName.substring(0, 40) + '...' : msg?.userName}</span>
+                                                        </div>}
+                                                    <div
+                                                        className={`${selectedGroupChat.includes(msg.id) ? 'copy-text' : ''} text-sm pl-3 pr-1 flex justify-between items-end ${msg.status === "sent" && "pt-1 "} whitespace-pre-line`}>
+                                                        <span className={'dark:text-white'}>{msg.message}</span>
+                                                        <div className={`text-[9px] pl-2 ${
+                                                            msg.status === "sent" ? "text-white" : "text-gray-500 dark:text-gray-200"
+                                                        }`}>
+                                                            {convertToLocalTime(msg.timeStamp)}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                ))}
+                                        ))}
                             </div>}
                     </div>
 

@@ -17,6 +17,7 @@ import {faImage, faXmark} from "@fortawesome/free-solid-svg-icons";
 import ImageDialog from "../common/ImageDialog";
 import ModelResponse from "./ModelResponse";
 import {adjustTextareaHeight, calculateLines} from "../service/commonFun";
+import AiHeaderMotionPage from "./AiHeaderMotionPage";
 
 
 const GeminiApi = () => {
@@ -343,13 +344,7 @@ const GeminiApi = () => {
                                     }
                                 </div>
                             )) :
-                            <div style={{position: 'relative'}}
-                                 className={`user-select-none flex items-center justify-center ${isMobile ? 'top-[110px]' : ''}`}>
-                                <img className="robot-image user-select-none"
-                                     src={robot} style={{height: '25rem'}}
-                                     onDoubleClickCapture={(e) => e.preventDefault()}
-                                     alt={"IAMAI"}/>
-                            </div>
+                             <AiHeaderMotionPage/>
                         }
                         {loading &&
                             <div className={'flex justify-center items-center h-[50vh]'} onLoad={() => {

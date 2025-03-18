@@ -29,7 +29,6 @@ export const postRequest = async (url, data, header = {}) => {
 
 export const getRequest = async (url, header = {}) => {
     const path = url.replace(/^\//, '');
-    console.log(getAuthToken(), '  == getAuthToken', url, header);
     try {
         return await API.get(`/${path}`, {
             headers: {
