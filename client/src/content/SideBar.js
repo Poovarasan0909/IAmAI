@@ -25,6 +25,7 @@ import {AppContext} from "../context/AppContext";
 import axios from "axios";
 import {useQuery} from "@tanstack/react-query";
 import {getAuthToken} from "../service/authToken";
+import {ShowPopup} from "../service/customPopup";
 
 const DrawerHeader = styled("div")(({theme}) => ({
     display: "flex",
@@ -226,9 +227,17 @@ const SideBar = ({
                                                     </div>
                                                     <div className={"text-[#ff7777] cursor-pointer rounded p-1 hover:bg-red-100 dark:hover:bg-[#0000005c]"}
                                                     onClick={() => {
-                                                        setHistoryList(historyList.filter((val) => listItemPopupMenuId !== val._id))
-                                                        deleteRequest(`api/deleteUserData/${listItemPopupMenuId}`)
-                                                            .then(() => refetchUserData())
+                                                       ShowPopup({
+                                                           title: "Delete",
+                                                           content: "Do you want to delete it?",
+                                                           isOkAction: true,
+                                                           isCloseAction: true,
+                                                           onOk: () => {
+                                                               setHistoryList(historyList.filter((val) => listItemPopupMenuId !== val._id))
+                                                               deleteRequest(`api/deleteUserData/${listItemPopupMenuId}`)
+                                                                   .then(() => refetchUserData())
+                                                           }
+                                                       })
                                                     }}>
                                                         <span className={"pr-2 "}><DeleteIcon/></span>
                                                         Delete

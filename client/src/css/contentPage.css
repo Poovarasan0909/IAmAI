@@ -401,3 +401,6 @@ p {
 .dark .checkbox-round:checked::after {
     color: #8ee150;
 }
+#err-popup-model {
+    display: none;
+}

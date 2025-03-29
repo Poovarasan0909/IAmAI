@@ -68,7 +68,7 @@ const SignUpAndSignIn = ({formType}) => {
                 setIsloading(true);
                 postRequest('isUserLoginExit', {userEmail: userEmail, userPassword: userPassword})
                     .then((res) => {
-                        if (res.data) {
+                        if (res?.data) {
                             setState({...state, user: res.data});
                             const token = res.headers?.authorization;
                             setAuthToken(token);

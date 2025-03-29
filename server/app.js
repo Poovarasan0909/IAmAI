@@ -143,7 +143,7 @@ app.use('/', userCredentialRoutes);
 app.get('/', (req, res) => {
     const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key_test_1234";
     const header = req.headers;
-    const token = jwt.sign({id: `${header?.id && header?.id !== 'null' ? header?.id : 'stranger_is_here'}`}, JWT_SECRET, {expiresIn: '1d'});
+    const token = jwt.sign({id: `${header?.id && header?.id !== 'null' ? header?.id : 'stranger_is_here'}`}, JWT_SECRET, {expiresIn: '1h'});
     res.setHeader("Authorization", `Bearer ${token}`);
     res.send('Hello World!');
 });

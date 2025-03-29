@@ -123,7 +123,7 @@ const GeminiApi = () => {
             .then((createdDataResponse) => {
                 if (userId) {
                     getRequest(`api/getUserDataById/${userId}`).then((res) => {
-                        setHistoryList(res.data);
+                        setHistoryList(res?.data);
                         const historyIdToFind = selectedHistoryId
                         if(createdDataResponse.data._id)
                           setSelectedHistoryId(createdDataResponse.data._id)
@@ -131,7 +131,7 @@ const GeminiApi = () => {
                         if(selectedHistory) {
                             setConversations(selectedHistory?.chatHistory);
                         }
-                    })
+                    }).catch(() =>{})
                 }
             })
     }
@@ -146,15 +146,11 @@ const GeminiApi = () => {
 
 
     const getResponseFromAI = async (prompt) => {
-        let inst = "I'm giving you a conversation history (`chatHistory`), which is a list of objects. Each object has a `role` ('user' or 'model') and `parts`, which contains a `text` property. " +
-            "I want you to continue the conversation based on the *last* 'user' entry in the `chatHistory`. " +
-            "you should respond as a 'model' to the last 'users' message. you should generate the text value under the parts only, not generate entire object. " +
-            "Respond in a friendly and casual tone, using emojis where appropriate. You should Read the entire conversation before generate the response. " +
-            "Generate a clear continuation response and explain to the points. you may provide an example for better understanding. if asking about coding you should give clear example code with explanation. "
-
+        let inst = "please respond as a model, giving me only the text-based answer based on the last user message provided in the conversation history" +
+            " and when you generate the code, give the explanation of the code as well. ";
         const nameRegex = /what.*your.*name|who.*are.*you|can.*say.*your.*name|tell.*your.*name/i;
         if (nameRegex.test(prompt)) {
-            inst += ' If anybody asks your name, tell them "My name is Poovarasan" ';
+            inst += ' If anybody asks your name, tell them "My name is IAMAI" ';
         }
 
         setLoading(true);

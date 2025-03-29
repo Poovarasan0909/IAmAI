@@ -5,7 +5,7 @@ const path = require("path");
 
 async function getResponseByPrompt(prompt, reqFile) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
+    const model = genAI.getGenerativeModel({model: "gemini-2.0-flash"});
 
     if(reqFile) {
       const filePath = path.join(__dirname, '..', 'uploads', reqFile?.filename);

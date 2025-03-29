@@ -1,6 +1,7 @@
 import axios from "axios";
 import packageJson from '../../package.json';
 import {getAuthToken} from "../service/authToken";
+import {ShowPopup} from "../service/customPopup";
 
 const baseURL = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.29.57:4000' :  packageJson.baseURL;
 
@@ -22,8 +23,9 @@ export const postRequest = async (url, data, header = {}) => {
             }
         });
     } catch (error) {
-        console.error("Error during post request:", error.message);
-        throw new Error(error.response?.data?.message);
+        if(url !== 'isUserLoginExit'){
+            errorHandler(error);
+        }
     }
 }
 
@@ -37,8 +39,7 @@ export const getRequest = async (url, header = {}) => {
             }
         });
     } catch (error) {
-        console.error('Error during getRequest:', error.message);
-        throw new Error(error.response?.data?.message);
+        errorHandler(error)
     }
 }
 
@@ -52,8 +53,7 @@ export const deleteRequest = async (url, header = {}) => {
             }
         });
     } catch (error) {
-        console.error('Error during deleteRequest:', error.message);
-        throw new Error(error.response?.data?.message);
+        errorHandler(error)
     }
 }
 
@@ -69,4 +69,40 @@ export const multipartPostRequest = async (url, formData) => {
         console.error('Error during multipartPostRequest: ', error.message);
         return { error: error.message}
     }
+}
+
+const errorHandler = (error) => {
+    let message = "Something went wrong! 🤯";
+    let reloadButton = false;
+    if(error.response) {
+        switch (error.response.status) {
+            case 401:
+                message = 'Unauthorized Access! You shall not pass! 🧙‍♂️🚫';
+                break;
+            case 403:
+                message = 'Hey! Your session expired. Please Reload the page. 🤷‍♂️';
+                reloadButton = true
+                break;
+            case 404:
+                message = "This page is missing! 🕵️‍♂️";
+                break;
+            case 500:
+                message = "Oh no! The server had a meltdown! 🔥";
+                break;
+            default:
+                message = `Unexpected error: ${error.response.status}. Even I don't know why! 🤷‍♂️`
+                break;
+        }
+    } else if(error.request) {
+        message = "Can't able to reach the server 🤯"
+    } else {
+        message = `Something wrong: ${error.message}. Aliens? 👽`;
+    }
+    ShowPopup({
+        content: message,
+        isReloadAction: reloadButton,
+        isCloseAction: true,
+        title: "Oops!",
+    });
+    console.error("Error details:", error);
 }
