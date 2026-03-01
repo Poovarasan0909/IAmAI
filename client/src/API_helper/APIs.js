@@ -3,7 +3,7 @@ import packageJson from '../../package.json';
 import {getAuthToken} from "../service/authToken";
 import {ShowPopup} from "../service/customPopup";
 
-const baseURL = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.29.57:4000' :  packageJson.baseURL;
+const baseURL = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://10.48.111.40:4000' :  packageJson.baseURL;
 
 const API = axios.create({
     baseURL: baseURL,

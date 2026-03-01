@@ -87,7 +87,7 @@ const GeminiApi = () => {
 
     }
     // const fetchResponse = async (prompt) => {
-    //     const baseUrl = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.29.57:4000' :  packageJson.baseURL;
+    //     const baseUrl = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://10.18.121.40`:4000' :  packageJson.baseURL;
     //     return new Promise((resolve, reject) => {
     //         const eventSource = new EventSource(`${baseUrl}/geminiAI-data?prompt=${encodeURIComponent(prompt)}`)
     //         eventSource.onmessage = (event) => {

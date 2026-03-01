@@ -21,6 +21,7 @@ const upload = multer({
 
 router.post('/gemini-AI-response', upload.single('chunk'), async (req, res) => {
     const { chunkIndex, totalChunks, fileName, prompt } = req.body;
+    console.log('reqFile:', fileName);
     try {
         if(fileName) {
             const chunkPath = path.join(uploadsDir, fileName);

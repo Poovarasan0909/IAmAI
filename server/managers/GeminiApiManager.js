@@ -1,38 +1,42 @@
 require('dotenv').config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { GoogleAIFileManager } = require("@google/generative-ai/server");
+const  { GoogleGenAI } = require("@google/genai")
 const path = require("path");
 
 async function getResponseByPrompt(prompt, reqFile) {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({model: "gemini-2.0-flash"});
-
+     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     if(reqFile) {
       const filePath = path.join(__dirname, '..', 'uploads', reqFile?.filename);
-      const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
-      const uploadResult = await fileManager.uploadFile(filePath, {
+      const uploadedFile = await ai.files.upload({
+        file: filePath,
+        config: {
           mimeType: reqFile.mimetype,
           displayName: reqFile.originalname,
-      });
-      const fileUri = uploadResult.file.uri;
-      const tokenCount = await model.countTokens([prompt, {
-          fileData: {
-              fileUri,
-              mimeType: reqFile.mimetype
-          },
-      }])
-      console.log("Requested Token Count => ",tokenCount);
-      const result = await model.generateContent([
-          prompt, {
-              fileData: {
-                  fileUri,
-                  mimeType: reqFile.mimetype
-              },
-          }]);
-      return result.response.text();
+        }
+      })
+      const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: [
+                {
+                    parts: [
+                        { text: prompt },
+                        {
+                            fileData: {
+                                fileUri: uploadedFile.uri,
+                                mimeType: uploadedFile.mimeType
+                            }
+                        }
+                    ]
+                }
+            ]
+        });
+      return response.text;
     } else {
-        const result = await model.generateContent([prompt]);
-        return result.response.text();
+        const response = await ai.models.generateContent({
+                    model: "gemini-2.5-flash",
+                    contents: prompt,
+                });
+        return response.text;
     }
 }
 

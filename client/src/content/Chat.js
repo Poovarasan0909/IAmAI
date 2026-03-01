@@ -20,7 +20,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ListLoader from "../loader/ListLoader";
 import {useQuery} from "@tanstack/react-query";
 
-const baseURL = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://192.168.29.57:4000' : packageJson.baseURL;
+const baseURL = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? 'http://10.48.111.40:4000' : packageJson.baseURL;
 
 const token = localStorage.getItem("token");
 const socket = io(baseURL, {
